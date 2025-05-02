@@ -2,12 +2,12 @@
   <img src="JlangLogo.png" width="200" alt="Jlang Logo">
 </p>
 
-<h1 align="center">Jlang</h1>
-
 <p align="center">
-  <em>A procedural programming language inspired by C and Go, built with LLVM, featuring JIT compilation.</em>
+  <em>A procedural programming language inspired by C and Go.</em>
 </p>
 
+
+## Langauge syntax ##
 
 ```Go
 interface IPrintable
