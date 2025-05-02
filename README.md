@@ -13,7 +13,7 @@ struct Person -> IPrintable
     var age int32; 
 }
 
-void Print() -> Person p
+void print() -> Person p
 {
     jout("First name: %s", p.firstName); 
     jout("Age: %d", p.age); 
