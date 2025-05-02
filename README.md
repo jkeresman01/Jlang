@@ -1,5 +1,13 @@
-# Jlang
-Procedural programming language based on C and Go
+<p align="center">
+  <img src="JlangLogo.png" width="200" alt="Jlang Logo">
+</p>
+
+<h1 align="center">Jlang</h1>
+
+<p align="center">
+  <em>A procedural programming language inspired by C and Go, built with LLVM, featuring JIT compilation.</em>
+</p>
+
 
 ```Go
 interface IPrintable
@@ -33,5 +41,4 @@ int32 main()
     }
 
     jfree(p);
-}
 }
