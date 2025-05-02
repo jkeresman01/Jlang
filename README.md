@@ -29,7 +29,7 @@ void print() -> Person p
 
 int32 main()
 {
-    var Person* p = (struct Person*) jalloc(sizeof(struct Person));
+    var p Person* = (struct Person*) jalloc(sizeof(struct Person));
 
     if (p == NULL) 
     {
