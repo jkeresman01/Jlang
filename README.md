@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="JlangLogo.png" width="180" alt="Jlang Logo">
+  <img src="resources/JlangLogo.png" width="180" alt="Jlang Logo">
 </p>
 
 <p align="center">

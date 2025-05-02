@@ -46,10 +46,10 @@ int main()
         std::cout << "Parsed " << ast.size() << " top-level declarations." << std::endl;
     }
     catch (const std::exception &ex)
-	{
-		std::cerr << "Error: " << ex.what() << std::endl;
-		return 1;
-	}
-
-        return 0;
+    {
+        std::cerr << "Error: " << ex.what() << std::endl;
+        return 1;
     }
+
+    return 0;
+}
