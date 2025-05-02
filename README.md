@@ -1,11 +1,22 @@
 # Jlang
-Procedural programming language based on C
+Procedural programming language based on C and Go
 
-```C
-struct Person
+```Go
+interface IPrintable
+{
+    void print();
+}
+
+struct Person -> IPrintable 
 {
     var firstName char*; 
     var age int32; 
+}
+
+void Print() -> Person p
+{
+    jout("First name: %s", p.firstName); 
+    jout("Age: %d", p.age); 
 }
 
 int32 main()
@@ -22,4 +33,5 @@ int32 main()
     }
 
     jfree(p);
+}
 }
