@@ -17,9 +17,9 @@ void print() -> Person p
 
 int32 main()
 {
-    var Person* p = (struct Person*) jalloc(sizeof(struct Person));
+    var person Person* = (struct Person*) jalloc(sizeof(struct Person));
 
-    if (p == NULL) 
+    if (person == NULL) 
     {
         jout("No can do"); 
     }

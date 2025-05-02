@@ -36,20 +36,20 @@ int main()
         std::cout << "=== Tokens ===" << std::endl;
         for (const auto &token : m_Tokens)
         {
-            std::cout << token.m_CurrentLine << ": " << token.lexeme << " (" << static_cast<int>(token.type)
-                      << ")\n";
+            std::cout << token.m_CurrentLine << ": " << token.m_lexeme << " ("
+                      << static_cast<int>(token.m_type) << ")\n";
         }
 
         Parser parser(m_Tokens);
-        auto ast = parser.parse();
+        auto ast = parser.Parse();
 
         std::cout << "Parsed " << ast.size() << " top-level declarations." << std::endl;
-
-        catch (const std::exception &ex)
-        {
-            std::cerr << "Error: " << ex.what() << std::endl;
-            return 1;
-        }
+    }
+    catch (const std::exception &ex)
+	{
+		std::cerr << "Error: " << ex.what() << std::endl;
+		return 1;
+	}
 
         return 0;
     }

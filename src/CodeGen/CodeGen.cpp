@@ -1,4 +1,4 @@
-#include "CodeGeneration.h"
+#include "CodeGen.h"
 
 namespace jlang
 {

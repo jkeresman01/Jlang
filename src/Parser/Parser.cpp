@@ -23,7 +23,7 @@ std::vector<std::shared_ptr<AstNode>> Parser::Parse()
 
 bool Parser::IsMatched(TokenType type)
 {
-    if (Check(m_type))
+    if (Check(type))
     {
         Advance();
         return true;
