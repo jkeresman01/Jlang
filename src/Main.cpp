@@ -1,0 +1,55 @@
+#include "Lexer/Lexer.h"
+#include "Parser/Parser.h"
+
+#include <fstream>
+#include <iostream>
+#include <sstream>
+
+using namespace jlang;
+
+std::string load(const std::string &path)
+{
+    std::ifstream in(path);
+
+    if (!in.is_open())
+    {
+        throw std::runtime_error("No can do for: " + path);
+    }
+
+    std::stringstream buffer;
+    buffer << in.rdbuf();
+
+    in.close();
+
+    return buffer.str();
+}
+
+int main()
+{
+    try
+    {
+        std::string m_Source = load("../sample.j");
+
+        Lexer lexer(m_Source);
+        auto m_Tokens = lexer.Tokenize();
+
+        std::cout << "=== Tokens ===" << std::endl;
+        for (const auto &token : m_Tokens)
+        {
+            std::cout << token.m_CurrentLine << ": " << token.lexeme << " (" << static_cast<int>(token.type)
+                      << ")\n";
+        }
+
+        Parser parser(m_Tokens);
+        auto ast = parser.parse();
+
+        std::cout << "Parsed " << ast.size() << " top-level declarations." << std::endl;
+
+        catch (const std::exception &ex)
+        {
+            std::cerr << "Error: " << ex.what() << std::endl;
+            return 1;
+        }
+
+        return 0;
+    }

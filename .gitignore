@@ -1,3 +1,7 @@
+#Build
+build/.*
+out/.*
+
 # Prerequisites
 *.d
 
