@@ -26,10 +26,10 @@
 
 #define LOG(severity, message) jlang::Logger::log(severity, message, __FILE__, __LINE__)
 
-#define JNETWORK_DEBUG(message) LOG("DEBUG", message)
-#define JNETWORK_INFO(message) LOG("INFO", message)
-#define JNETWORK_WARN(message) LOG("WARN", message)
-#define JENTWORK_ERROR(message) LOG("ERROR", message)
+#define JLANG_DEBUG(message) LOG("DEBUG", message)
+#define JLANG_INFO(message) LOG("INFO", message)
+#define JLANG_WARN(message) LOG("WARN", message)
+#define JLANG_ERROR(message) LOG("ERROR", message)
 
 namespace jlang
 {
