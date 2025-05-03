@@ -235,7 +235,7 @@ std::shared_ptr<AstNode> Parser::ParseFunction()
     const std::string &functionName = Previous().m_lexeme;
 
     // Hardcoded for no arguments, currently ..... will change that
-    if (!IsMatched(TokenType::LParen) || !IsMatched(Token::RParen))
+    if (!IsMatched(TokenType::LParen) || !IsMatched(TokenType::RParen))
     {
         JLANG_ERROR("Expected () after function name");
     }
@@ -255,7 +255,7 @@ std::shared_ptr<AstNode> Parser::ParseFunction()
 
     if (IsMatched(TokenType::Arrow))
     {
-        if (!IsMatched(TokeType::Identifier))
+        if (!IsMatched(TokenType::Identifier))
         {
             JLANG_ERROR("Expected paramter type identifier '->' ");
         }
@@ -284,12 +284,34 @@ std::shared_ptr<AstNode> Parser::ParseFunction()
     return functionDeclNode;
 }
 
-std::shared_ptr<AstNode> Parser::ParseStatement()
+std::shared_ptr<AstNode> Parser::ParseBlock()
 {
-    return std::shared_ptr<AstNode>();
+    if (!IsMatched(TokenType::LBrace))
+    {
+        JLANG_ERROR("Expected '{' at the beginning of the block");
+    }
+
+    auto blockStmt = std::make_shared<BlockStatement>();
+
+    while (!Check(TokenType::RBrace) && !IsEndReached())
+    {
+        auto statement = ParseStatement();
+
+        if (statement)
+        {
+            blockStmt->statements.push_back(statement);
+        }
+    }
+
+    if (!IsMatched(TokenType::RBrace))
+    {
+        JLANG_ERROR("Expected '}' after block");
+    }
+
+    return blockStmt;
 }
 
-std::shared_ptr<AstNode> Parser::ParseBlock()
+std::shared_ptr<AstNode> Parser::ParseStatement()
 {
     return std::shared_ptr<AstNode>();
 }
