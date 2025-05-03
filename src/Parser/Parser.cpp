@@ -79,14 +79,14 @@ std::shared_ptr<AstNode> Parser::ParseInterface()
 
     if (!IsMatched(TokenType::Identifier))
     {
-        JLANG_ERROR(TEXT("Expected interaface name"));
+        JLANG_ERROR("Expected interaface name");
     }
 
-    const std::string name = Previous().m_lexeme;
+    const std::string &name = Previous().m_lexeme;
 
     if (!IsMatched(TokenType::LBrace))
     {
-        JLANG_ERROR(TEXT("Expected '{' after interface name!"));
+        JLANG_ERROR("Expected '{' after interface name!");
     }
 
     auto interfaceDeclNode = std::make_shared<InterfaceDecl>();
@@ -97,38 +97,110 @@ std::shared_ptr<AstNode> Parser::ParseInterface()
         if (!IsMatched(TokenType::Void))
         {
             // It's kinda hardcoded for now!! -> will change that later on
-            if (!match(TokenType::Void))
+            if (!IsMatched(TokenType::Void))
             {
-                JLANG_ERROR(TEXT(("Expected 'void' in interface method"));
+                JLANG_ERROR("Expected 'void' in interface method");
             }
 
-            if (!match(TokenType::Identifier))
+            if (!IsMatched(TokenType::Identifier))
             {
-                JLANG_ERROR(TEXT(("Expected method name"));
+                JLANG_ERROR("Expected method name");
             }
 
-            std::string methodName = previous().lexeme;
+            std::string methodName = Previous().m_lexeme;
 
-            if (!match(TokenType::LParen) || !match(TokenType::RParen) || !match(TokenType::Semicolon))
+            if (!IsMatched(TokenType::LParen) || !IsMatched(TokenType::RParen) ||
+                !IsMatched(TokenType::Semicolon))
             {
-                JLANG_ERROR(TEXT(("Expected '()' and ';' after method name"));
+                JLANG_ERROR("Expected '()' and ';' after method name");
             }
 
-            node->methods.push_back(methodName);
+            interfaceDeclNode->methods.push_back(methodName);
         }
     }
 
-    if (!match(TokenType::RBrace))
+    if (!IsMatched(TokenType::RBrace))
     {
-        JLANG_ERROR(TEXT("Expected '}' at end of interface"));
+        JLANG_ERROR("Expected '}' at end of interface");
     }
 
-    return node;
+    return interfaceDeclNode;
 }
 
 std::shared_ptr<AstNode> Parser::ParseStruct()
 {
-    return std::shared_ptr<AstNode>();
+    Advance();
+
+    if (!IsMatched(TokenType::Identifier))
+    {
+        JLANG_ERROR("Expected struct name");
+    }
+
+    const std::string name = Previous().m_lexeme;
+
+    std::string implementedInterface;
+
+    if (IsMatched(TokenType::Arrow))
+    {
+        if (!IsMatched(TokenType::Identifier))
+        {
+            JLANG_ERROR("Expected interface name after '->'");
+        }
+
+        implementedInterface = Previous().m_lexeme;
+    }
+
+    if (!IsMatched(TokenType::LBrace))
+    {
+        throw std::runtime_error("Expected '{' after struct declaration");
+    }
+
+    auto node = std::make_shared<StructDecl>();
+    node->name = name;
+    node->interfaceImplemented = implementedInterface;
+
+    while (!Check(TokenType::RBrace) && !IsEndReached())
+    {
+        if (!IsMatched(TokenType::Var))
+        {
+            throw std::runtime_error("Expected 'var' in struct field");
+        }
+
+        if (!IsMatched(TokenType::Identifier))
+        {
+            throw std::runtime_error("Expected field name");
+        }
+
+        std::string fieldName = Previous().m_lexeme;
+
+        if (!IsMatched(TokenType::Identifier))
+        {
+            throw std::runtime_error("Expected field type");
+        }
+
+        std::string typeName = Previous().m_lexeme;
+        bool isPointer = false;
+
+        if (IsMatched(TokenType::Star))
+        {
+            isPointer = true;
+        }
+
+        if (!IsMatched(TokenType::Semicolon))
+        {
+            throw std::runtime_error("Expected ';' after struct field");
+        }
+
+        StructField field{fieldName, TypeRef{typeName, isPointer}};
+        node->fields.push_back(field);
+    }
+
+    if (!IsMatched(TokenType::RBrace))
+    {
+        throw std::runtime_error("Expected '}' after struct body");
+    }
+
+    return node;
 }
 
 std::shared_ptr<AstNode> Parser::ParseFunction()
