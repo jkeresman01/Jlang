@@ -28,5 +28,5 @@ int32 main()
         jout("Incredible");
     }
 
-    jfree(p);
+    jfree(person);
 }
