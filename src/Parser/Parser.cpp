@@ -68,9 +68,22 @@ bool Parser::IsEndReached() const
     return Peek().m_type == TokenType::EndOfFile;
 }
 
+// Everything is kinda hardcoded for now!! -> will change that later on, just trying to get stuff rolling..
 std::shared_ptr<AstNode> Parser::ParseDeclaration()
 {
-    return std::shared_ptr<AstNode>();
+    if (Check(TokenType::Interface))
+    {
+        return ParseInterface();
+    }
+
+    if (Check(TokenType::Struct))
+    {
+        return ParseStruct();
+    }
+
+    Advance();
+
+    return nullptr;
 }
 
 std::shared_ptr<AstNode> Parser::ParseInterface()
@@ -96,7 +109,6 @@ std::shared_ptr<AstNode> Parser::ParseInterface()
     {
         if (!IsMatched(TokenType::Void))
         {
-            // It's kinda hardcoded for now!! -> will change that later on
             if (!IsMatched(TokenType::Void))
             {
                 JLANG_ERROR("Expected 'void' in interface method");
