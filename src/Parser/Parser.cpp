@@ -81,6 +81,11 @@ std::shared_ptr<AstNode> Parser::ParseDeclaration()
         return ParseStruct();
     }
 
+    if (Check(TokenType::Void) || Check(TokenType::Int32))
+    {
+        return ParseFunction();
+    }
+
     Advance();
 
     return nullptr;
@@ -167,12 +172,13 @@ std::shared_ptr<AstNode> Parser::ParseStruct()
         JLANG_ERROR("Expected '{' after struct declaration");
     }
 
-    auto node = std::make_shared<StructDecl>();
-    node->name = name;
-    node->interfaceImplemented = implementedInterface;
+    auto structDeclNode = std::make_shared<StructDecl>();
+    structDeclNode->name = name;
+    structDeclNode->interfaceImplemented = implementedInterface;
 
     while (!Check(TokenType::RBrace) && !IsEndReached())
     {
+        // TODO struct can be empty
         if (!IsMatched(TokenType::Var))
         {
             JLANG_ERROR("Expected 'var' in struct field");
@@ -204,7 +210,7 @@ std::shared_ptr<AstNode> Parser::ParseStruct()
         }
 
         StructField field{fieldName, TypeRef{typeName, isPointer}};
-        node->fields.push_back(field);
+        structDeclNode->fields.push_back(field);
     }
 
     if (!IsMatched(TokenType::RBrace))
@@ -212,12 +218,70 @@ std::shared_ptr<AstNode> Parser::ParseStruct()
         JLANG_ERROR("Expected '}' after struct body");
     }
 
-    return node;
+    return structDeclNode;
 }
 
 std::shared_ptr<AstNode> Parser::ParseFunction()
 {
-    return std::shared_ptr<AstNode>();
+    Advance();
+
+    TokenType returnTokenType = Previous().m_type;
+
+    if (!IsMatched(TokenType::Identifier))
+    {
+        JLANG_ERROR("Expected function name!");
+    }
+
+    const std::string &functionName = Previous().m_lexeme;
+
+    // Hardcoded for no arguments, currently ..... will change that
+    if (!IsMatched(TokenType::LParen) || !IsMatched(Token::RParen))
+    {
+        JLANG_ERROR("Expected () after function name");
+    }
+
+    TypeRef returnType;
+
+    if (returnTokenType == TokenType::Void)
+    {
+        returnType = TypeRef{"void", false};
+    }
+    else
+    {
+        returnType = TypeRef{Previous().m_lexeme, false};
+    }
+
+    std::vector<Parameter> params;
+
+    if (IsMatched(TokenType::Arrow))
+    {
+        if (!IsMatched(TokeType::Identifier))
+        {
+            JLANG_ERROR("Expected paramter type identifier '->' ");
+        }
+
+        const std::string &paramType = Previous().m_lexeme;
+        bool isPointer = IsMatched(TokenType::Star);
+
+        if (!IsMatched(TokenType::Identifier))
+        {
+            JLANG_ERROR("Expected paramter name!");
+        }
+
+        const std::string &paramName = Previous().m_lexeme;
+
+        params.push_back(Parameter{paramName, TypeRef{paramType, isPointer}});
+    }
+
+    auto body = ParseBlock();
+
+    auto functionDeclNode = std::make_shared<FunctionDecl>();
+    functionDeclNode->name = functionName;
+    functionDeclNode->params = params;
+    functionDeclNode->returnType = returnType;
+    functionDeclNode->body = body;
+
+    return functionDeclNode;
 }
 
 std::shared_ptr<AstNode> Parser::ParseStatement()
