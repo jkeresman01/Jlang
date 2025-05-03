@@ -1,5 +1,7 @@
 #include "Parser.h"
 
+#include "../Common/Logger.h"
+
 namespace jlang
 {
 
@@ -73,7 +75,55 @@ std::shared_ptr<AstNode> Parser::ParseDeclaration()
 
 std::shared_ptr<AstNode> Parser::ParseInterface()
 {
-    return std::shared_ptr<AstNode>();
+    Advance();
+
+    if (!IsMatched(TokenType::Identifier))
+    {
+        JLANG_ERROR(TEXT("Expected interaface name"));
+    }
+
+    const std::string name = Previous().m_lexeme;
+
+    if (!IsMatched(TokenType::LBrace))
+    {
+        JLANG_ERROR(TEXT("Expected '{' after interface name!"));
+    }
+
+    auto interfaceDeclNode = std::make_shared<InterfaceDecl>();
+    interfaceDeclNode->name = name;
+
+    while (!Check(TokenType::RBrace) && !IsEndReached())
+    {
+        if (!IsMatched(TokenType::Void))
+        {
+            // It's kinda hardcoded for now!! -> will change that later on
+            if (!match(TokenType::Void))
+            {
+                JLANG_ERROR(TEXT(("Expected 'void' in interface method"));
+            }
+
+            if (!match(TokenType::Identifier))
+            {
+                JLANG_ERROR(TEXT(("Expected method name"));
+            }
+
+            std::string methodName = previous().lexeme;
+
+            if (!match(TokenType::LParen) || !match(TokenType::RParen) || !match(TokenType::Semicolon))
+            {
+                JLANG_ERROR(TEXT(("Expected '()' and ';' after method name"));
+            }
+
+            node->methods.push_back(methodName);
+        }
+    }
+
+    if (!match(TokenType::RBrace))
+    {
+        JLANG_ERROR(TEXT("Expected '}' at end of interface"));
+    }
+
+    return node;
 }
 
 std::shared_ptr<AstNode> Parser::ParseStruct()
