@@ -164,7 +164,7 @@ std::shared_ptr<AstNode> Parser::ParseStruct()
 
     if (!IsMatched(TokenType::LBrace))
     {
-        throw std::runtime_error("Expected '{' after struct declaration");
+        JLANG_ERROR("Expected '{' after struct declaration");
     }
 
     auto node = std::make_shared<StructDecl>();
@@ -175,19 +175,19 @@ std::shared_ptr<AstNode> Parser::ParseStruct()
     {
         if (!IsMatched(TokenType::Var))
         {
-            throw std::runtime_error("Expected 'var' in struct field");
+            JLANG_ERROR("Expected 'var' in struct field");
         }
 
         if (!IsMatched(TokenType::Identifier))
         {
-            throw std::runtime_error("Expected field name");
+            JLANG_ERROR("Expected field name");
         }
 
         std::string fieldName = Previous().m_lexeme;
 
         if (!IsMatched(TokenType::Identifier))
         {
-            throw std::runtime_error("Expected field type");
+            JLANG_ERROR("Expected field type");
         }
 
         std::string typeName = Previous().m_lexeme;
@@ -200,7 +200,7 @@ std::shared_ptr<AstNode> Parser::ParseStruct()
 
         if (!IsMatched(TokenType::Semicolon))
         {
-            throw std::runtime_error("Expected ';' after struct field");
+            JLANG_ERROR("Expected ';' after struct field");
         }
 
         StructField field{fieldName, TypeRef{typeName, isPointer}};
@@ -209,7 +209,7 @@ std::shared_ptr<AstNode> Parser::ParseStruct()
 
     if (!IsMatched(TokenType::RBrace))
     {
-        throw std::runtime_error("Expected '}' after struct body");
+        JLANG_ERROR("Expected '}' after struct body");
     }
 
     return node;
