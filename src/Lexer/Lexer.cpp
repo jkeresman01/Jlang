@@ -6,7 +6,7 @@
 namespace jlang
 {
 
-static std::unordered_map<std::string, TokenType> keywords = {
+static std::unordered_map<std::string, TokenType> s_Keywords = {
     {"interface", TokenType::Interface}, {"struct", TokenType::Struct}, {"void", TokenType::Void},
     {"int32", TokenType::Int32},         {"var", TokenType::Var},       {"if", TokenType::If},
     {"else", TokenType::Else},           {"return", TokenType::Return}};
@@ -28,10 +28,14 @@ std::vector<Token> Lexer::Tokenize()
 void Lexer::ScanToken()
 {
     SkipWhitespace();
+
     if (IsEndReached())
+    {
         return;
+    }
 
     char c = Advance();
+
     switch (c)
     {
     case '{':
@@ -72,20 +76,30 @@ void Lexer::ScanToken()
         break;
     case '-':
         if (IsMatched('>'))
+        {
             AddToken(TokenType::Arrow);
+        }
         else
+        {
             AddToken(TokenType::Unknown);
+        }
         break;
     case '"':
         AddStringLiteral();
         break;
     default:
         if (std::isdigit(c))
+        {
             AddNumber();
+        }
         else if (std::isalpha(c) || c == '_')
+        {
             AddIdentifier();
+        }
         else
+        {
             AddToken(TokenType::Unknown);
+        }
     }
 }
 
@@ -201,8 +215,8 @@ void Lexer::AddStringLiteral()
 
 TokenType Lexer::IsKeywordOrIndetifier(const std::string &text)
 {
-    auto it = keywords.find(text);
-    return it != keywords.end() ? it->second : TokenType::Identifier;
+    auto it = s_Keywords.find(text);
+    return it != s_Keywords.end() ? it->second : TokenType::Identifier;
 }
 
 } // namespace jlang
