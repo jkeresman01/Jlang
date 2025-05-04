@@ -178,12 +178,6 @@ std::shared_ptr<AstNode> Parser::ParseStruct()
 
     while (!Check(TokenType::RBrace) && !IsEndReached())
     {
-        // TODO struct can be empty
-        if (!IsMatched(TokenType::Var))
-        {
-            JLANG_ERROR("Expected 'var' in struct field");
-        }
-
         if (!IsMatched(TokenType::Identifier))
         {
             JLANG_ERROR("Expected field name");
