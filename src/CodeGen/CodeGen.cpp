@@ -1,8 +1,18 @@
-#include "CodeGeneration/CodeGeneration.h"
+#include "CodeGen.h"
+
 #include <iostream>
+
+#include <llvm/IR/Function.h>
+#include <llvm/IR/IRBuilder.h>
+#include <llvm/IR/LLVMContext.h>
+#include <llvm/IR/Module.h>
+#include <llvm/IR/Type.h>
+#include <llvm/IR/Value.h>
 #include <llvm/IR/Verifier.h>
 
-namespace Jlang
+#include "../Common/Logger.h"
+
+namespace jlang
 {
 
 CodeGenerator::CodeGenerator()
@@ -131,7 +141,8 @@ llvm::Type *CodeGenerator::MapType(const TypeRef &typeRef)
 
     if (typeRef.name == "char")
     {
-        return typeRef.isPointer ? llvm::Type::getInt8PtrTy(m_Context) : llvm::Type::getInt8Ty(m_Context);
+        llvm::Type *charType = llvm::Type::getInt8Ty(m_Context);
+        return typeRef.isPointer ? llvm::PointerType::getUnqual(charType) : charType;
     }
 
     return llvm::Type::getVoidTy(m_Context);
@@ -142,4 +153,4 @@ void CodeGenerator::DumpIR()
     m_Module->print(llvm::outs(), nullptr);
 }
 
-} // namespace Jlang
+} // namespace jlang
