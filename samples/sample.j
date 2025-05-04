@@ -5,8 +5,8 @@ interface IPrintable
 
 struct Person -> IPrintable 
 {
-    var firstName char*; 
-    var age int32; 
+    firstName char*; 
+    age int32; 
 }
 
 void print() -> Person p
