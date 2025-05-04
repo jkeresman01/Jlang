@@ -314,7 +314,7 @@ std::shared_ptr<AstNode> Parser::ParseIfStatement()
 {
     Advance();
 
-    if (!IsMatched(TokenType::LParen)) 
+    if (!IsMatched(TokenType::LParen))
     {
         JLANG_ERROR("Expected '(' after 'if'");
     }

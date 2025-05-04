@@ -28,19 +28,19 @@ int main()
 {
     try
     {
-        std::string m_Source = load("../samples/sample.j");
+        std::string sourceCode = load("../samples/sample.j");
 
-        Lexer lexer(m_Source);
-        auto m_Tokens = lexer.Tokenize();
+        Lexer lexer(sourceCode);
+        const std::vector<Token> &tokens = lexer.Tokenize();
 
         std::cout << "=== Tokens ===" << std::endl;
-        for (const auto &token : m_Tokens)
+        for (const auto &token : tokens)
         {
             std::cout << token.m_CurrentLine << ": " << token.m_lexeme << " ("
-                      << static_cast<int>(token.m_type) << ")\n";
+                      << static_cast<int32_t>(token.m_type) << ")\n";
         }
 
-        Parser parser(m_Tokens);
+        Parser parser(tokens);
         auto ast = parser.Parse();
 
         std::cout << "Parsed " << ast.size() << " top-level declarations." << std::endl;
