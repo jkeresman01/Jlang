@@ -7,7 +7,7 @@
 
 using namespace jlang;
 
-//std::filesystem::path is better here, but don't care, it's for testing
+// std::filesystem::path is better here, but don't care, it's for testing
 std::string load(const std::string &path)
 {
     std::ifstream in(path);
