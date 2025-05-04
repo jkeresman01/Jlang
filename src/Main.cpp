@@ -28,7 +28,7 @@ int main()
 {
     try
     {
-        std::string m_Source = load("../sample.j");
+        std::string m_Source = load("../samples/sample.j");
 
         Lexer lexer(m_Source);
         auto m_Tokens = lexer.Tokenize();

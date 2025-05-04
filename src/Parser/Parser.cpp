@@ -312,17 +312,117 @@ std::shared_ptr<AstNode> Parser::ParseStatement()
 
 std::shared_ptr<AstNode> Parser::ParseIfStatement()
 {
-    return std::shared_ptr<AstNode>();
+    Advance();
+
+    {
+        JLANG_ERROR("Expected '(' after 'if'");
+    }
+
+    auto condition = ParseExpression();
+
+    if (!IsMatched(TokenType::RParen))
+    {
+        JLANG_ERROR("Expected ')' after condition");
+    }
+
+    auto thenBranch = ParseStatement();
+
+    std::shared_ptr<AstNode> elseBranch = nullptr;
+    if (IsMatched(TokenType::Else))
+    {
+        elseBranch = ParseStatement();
+    }
+
+    auto node = std::make_shared<IfStatement>();
+
+    node->condition = condition;
+    node->thenBranch = thenBranch;
+    node->elseBranch = elseBranch;
+
+    return node;
 }
 
 std::shared_ptr<AstNode> Parser::ParseExpression()
 {
-    return std::shared_ptr<AstNode>();
+    auto expersion = ParseExpression();
+
+    if (!IsMatched(TokenType::Semicolon))
+    {
+        JLANG_ERROR("Expected ';' after expression");
+    }
+
+    auto stmt = std::make_shared<ExprStatement>();
+    stmt->expression = expersion;
+
+    return stmt;
+}
+
+std::shared_ptr<AstNode> Parser::ParseExprStatement()
+{
+    auto expression = ParseExpression();
+
+    if (!IsMatched(TokenType::Semicolon))
+    {
+        JLANG_ERROR("Expected ';' after expression");
+    }
+
+    auto stmt = std::make_shared<ExprStatement>();
+    stmt->expression = expression;
+
+    return stmt;
 }
 
 std::shared_ptr<AstNode> Parser::ParsePrimary()
 {
-    return std::shared_ptr<AstNode>();
+
+    if (IsMatched(TokenType::Identifier))
+    {
+        const std::string &name = Previous().m_lexeme;
+
+        if (IsMatched(TokenType::LParen))
+        {
+            auto call = std::make_shared<CallExpr>();
+            call->callee = name;
+
+            if (!IsMatched(TokenType::RParen))
+            {
+                do
+                {
+                    auto arg = ParseExpression();
+                    call->arguments.push_back(arg);
+                } while (IsMatched(TokenType::Comma));
+            }
+
+            if (!IsMatched(TokenType::RParen))
+            {
+                JLANG_ERROR("Expected ')' after arguments");
+            }
+
+            return call;
+        }
+        else
+        {
+            auto var = std::make_shared<VarExpr>();
+            var->name = name;
+            return var;
+        }
+    }
+
+    if (IsMatched(TokenType::Identifier))
+    {
+        auto experssion = std::make_shared<VarExpr>();
+        experssion->name = Previous().m_lexeme;
+        return experssion;
+    }
+
+    if (IsMatched(TokenType::StringLiteral))
+    {
+        auto experssion = std::make_shared<LiteralExpr>();
+        experssion->value = Previous().m_lexeme;
+        return experssion;
+    }
+
+    JLANG_ERROR("Expected expression");
 }
 
 } // namespace jlang

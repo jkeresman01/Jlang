@@ -83,6 +83,7 @@ class Parser
     std::shared_ptr<AstNode> ParseBlock();
     std::shared_ptr<AstNode> ParseIfStatement();
     std::shared_ptr<AstNode> ParseExpression();
+    std::shared_ptr<AstNode> ParseExprStatement();
     std::shared_ptr<AstNode> ParsePrimary();
 
   private:
