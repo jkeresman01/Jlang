@@ -6,8 +6,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-set(RUNTIME_FILE "${CMAKE_SOURCE_DIR}/runtime.c")
-
 file(GLOB_RECURSE SRC_FILES
     "${CMAKE_SOURCE_DIR}/src/*.cpp"
     "${CMAKE_SOURCE_DIR}/src/*.h"
@@ -40,4 +38,3 @@ llvm_map_components_to_libnames(LLVM_LIBS
 )
 
 target_link_libraries(Jlang PRIVATE ${LLVM_LIBS})
-
