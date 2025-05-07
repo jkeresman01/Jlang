@@ -66,7 +66,6 @@ void CodeGenerator::VisitFunctionDecl(FunctionDecl &)
 void CodeGenerator::VisitInterfaceDecl(InterfaceDecl &) {}
 void CodeGenerator::VisitStructDecl(StructDecl &) {}
 void CodeGenerator::VisitVariableDecl(VariableDecl &) {}
-}
 
 void CodeGenerator::VisitIfStatement(IfStatement &)
 {

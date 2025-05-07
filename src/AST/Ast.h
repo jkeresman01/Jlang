@@ -16,7 +16,7 @@ struct AstNode
 
     virtual ~AstNode() = default;
 
-    virtual void accept(AstVisitor &visitor) = 0;
+    virtual void Accept(AstVisitor &visitor) = 0;
 };
 
 using AstNodePtr = std::shared_ptr<AstNode>;
