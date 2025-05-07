@@ -1,35 +1,31 @@
 #pragma once
 
-////////////////////////////////////////////////////////////
-// Headers
-////////////////////////////////////////////////////////////
-
-#include <chrono>
-#include <cstdarg>
-#include <cstdint>
-#include <cstdio>
-#include <ctime>
-#include <fstream>
-#include <iomanip>
 #include <iostream>
-#include <sstream>
-#include <string>
+#include <llvm/IR/Value.h>
 
 #define MAX_BUFFER_SIZE 256
 
-#define TEXT(format, ...)                                                                                    \
+#define STR(format, ...)                                                                                     \
     [](const char *fmt, auto... args) {                                                                      \
         char buffer[MAX_BUFFER_SIZE];                                                                        \
-        snprintf(buffer, sizeof(buffer), fmt, args...);                                                      \
+        std::snprintf(buffer, sizeof(buffer), fmt, args...);                                                 \
         return std::string(buffer);                                                                          \
     }(format, __VA_ARGS__)
+
+#define JLANG_ERROR(MSG) LogErrorV(MSG)
 
 #define LOG(severity, message) jlang::Logger::log(severity, message, __FILE__, __LINE__)
 
 #define JLANG_DEBUG(message) LOG("DEBUG", message)
-#define JLANG_INFO(message) LOG("INFO", message)
-#define JLANG_WARN(message) LOG("WARN", message)
-#define JLANG_ERROR(message) LOG("ERROR", message)
+#define JLANG_LOG_INFO(message) LOG("INFO", message)
+#define JLANG_LOG_WARN(message) LOG("WARN", message)
+#define JLANG_LOG_ERROR(message) LOG("ERROR", message)
+
+inline llvm::Value *LogErrorV(const char *message)
+{
+    std::cerr << "JLANG ERROR: " << message << std::endl;
+    return nullptr;
+}
 
 namespace jlang
 {
@@ -42,17 +38,17 @@ class Logger
     static void log(const std::string &severity, const std::string &message, const char *file,
                     uint32_t lineNumber)
     {
-        std::ofstream logfile("C:\\Users\\josip\\Desktop\\Jlang\\log.txt", std::ios::app);
+        std::ofstream log("log.txt");
 
-        if (!logfile.is_open())
+        if (!log.is_open())
         {
-            std::cerr << "No can do for opening log file!" << std::endl;
+            std::cerr << "No can do for logging!\r\n";
             return;
         }
 
-        putLogMessage(logfile, message, severity, lineNumber, file);
+        putLogMessage(log, message, severity, lineNumber, file);
 
-        logfile.close();
+        log.close();
     }
 
   private:
@@ -60,7 +56,7 @@ class Logger
                               uint32_t lineNumber, const char *file)
     {
         log << "[";
-        log << "] ";
+        log << " JLANG " log << "] ";
 
         std::ostringstream location;
         location << "[" << file << ":" << lineNumber << "]";
@@ -73,7 +69,7 @@ class Logger
             log << std::setw(padding) << " ";
         }
 
-        log << severity << ": " << message << std::endl;
+        log << severity << ": " << message << "\r\n";
     }
 };
 

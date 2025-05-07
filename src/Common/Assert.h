@@ -8,8 +8,9 @@
     {                                                                                                        \
         if (!(condition))                                                                                    \
         {                                                                                                    \
-            std::cerr << "ASSERT FAILED: " << #condition << " at " << __FILE__ << ":" << __LINE__            \
-                      << std::endl;                                                                          \
-            std::abort();                                                                                    \
-        }                                                                                                    \
-    } while (0)
+            std::cerr << "JLANG ASSERT FAILED: " << #condition << " at " << __FILE__ << ":" << __LINE__      \
+                      << "\r\n"
+std::abort();
+}
+}
+while (0)

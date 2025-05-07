@@ -20,6 +20,7 @@ std::vector<std::shared_ptr<AstNode>> Parser::Parse()
             program.push_back(declaration);
         }
     }
+
     return program;
 }
 
@@ -30,6 +31,7 @@ bool Parser::IsMatched(TokenType type)
         Advance();
         return true;
     }
+
     return false;
 }
 

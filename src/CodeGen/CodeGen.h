@@ -1,6 +1,11 @@
 #pragma once
 
-#include "AST/Ast.h"
+#include "AstVisitor.h"
+
+#include "../AST/Ast.h"
+#include "../AST/Expressions/Expressions.h"
+#include "../AST/Statements/Statements.h"
+#include "../AST/TopLevelDecl/TopLevelDecl.h"
 
 #include <memory>
 #include <unordered_map>
@@ -15,7 +20,7 @@
 namespace jlang
 {
 
-class CodeGenerator
+class CodeGenerator : public AstVisitor
 {
   public:
     CodeGenerator();
@@ -24,17 +29,31 @@ class CodeGenerator
     void DumpIR();
 
   private:
-    llvm::Value *GenerateStatement(std::shared_ptr<AstNode> stmt);
-    llvm::Value *GenerateExpression(std::shared_ptr<AstNode> expr);
-    llvm::Function *GenerateFunction(std::shared_ptr<FunctionDecl> func);
+    virtual void VisitFunctionDecl(FunctionDecl &) override;
+    virtual void VisitInterfaceDecl(InterfaceDecl &) override;
+    virtual void VisitStructDecl(StructDecl &) override;
+    virtual void VisitVariableDecl(VariableDecl &) override;
 
+    virtual void VisitIfStatement(IfStatement &) override;
+    virtual void VisitBlockStatement(BlockStatement &) override;
+    virtual void VisitExprStatement(ExprStatement &) override;
+
+    virtual void VisitCallExpr(CallExpr &) override;
+    virtual void VisitBinaryExpr(BinaryExpr &) override;
+    virtual void VisitLiteralExpr(LiteralExpr &) override;
+    virtual void VisitVarExpr(VarExpr &) override;
+    virtual void VisitCastExpr(CastExpr &) override;
+
+  private:
     llvm::Type *MapType(const TypeRef &typeRef);
 
   private:
     llvm::LLVMContext m_Context;
     std::unique_ptr<llvm::Module> m_Module;
     llvm::IRBuilder<> m_IRBuilder;
+
     std::unordered_map<std::string, llvm::Value *> m_namedValues;
+    llvm::Value *m_LastValue = nullptr;
 };
 
 } // namespace jlang

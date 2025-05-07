@@ -1,5 +1,7 @@
 #include "CodeGen.h"
 
+#include "../Common/Logger.h"
+
 #include <iostream>
 
 #include <llvm/IR/Function.h>
@@ -10,8 +12,6 @@
 #include <llvm/IR/Value.h>
 #include <llvm/IR/Verifier.h>
 
-#include "../Common/Logger.h"
-
 namespace jlang
 {
 
@@ -20,111 +20,179 @@ CodeGenerator::CodeGenerator()
 {
 }
 
-void CodeGenerator::Generate(const std::vector<std::shared_ptr<AstNode>> &program)
+void CodeGenerator::Generate(const std::vector<std::shared_ptr<AstNode>> &program) {}
+
+void CodeGenerator::DumpIR()
 {
-    for (const auto &node : program)
-    {
-        if (node->type == NodeType::FunctionDecl)
-        {
-            GenerateFunction(std::static_pointer_cast<FunctionDecl>(node));
-        }
-    }
+    m_Module->print(llvm::outs(), nullptr);
 }
 
-llvm::Function *CodeGenerator::GenerateFunction(std::shared_ptr<FunctionDecl> func)
+void CodeGenerator::VisitFunctionDecl(FunctionDecl &)
 {
-    std::vector<llvm::Type *> argTypes;
-    for (const auto &param : func->params)
+    std::vector<llvm::Type *> paramTypes;
+    for (const auto &param : node.params)
     {
-        argTypes.push_back(MapType(param.type));
+        paramTypes.push_back(MapType(param.type));
     }
 
-    llvm::FunctionType *functionType = llvm::FunctionType::get(MapType(func->returnType), argTypes, false);
+    llvm::FunctionType *funcType = llvm::FunctionType::get(MapType(node.returnType), paramTypes, false);
 
     llvm::Function *function =
-        llvm::Function::Create(functionType, llvm::Function::ExternalLinkage, func->name, m_Module.get());
+        llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, node.name, m_Module.get());
 
-    llvm::BasicBlock *entryBlock = llvm::BasicBlock::Create(m_Context, "entry", function);
-    m_IRBuilder.SetInsertPoint(entryBlock);
+    llvm::BasicBlock *entry = llvm::BasicBlock::Create(m_Context, "entry", function);
+    m_IRBuilder.SetInsertPoint(entry);
 
     unsigned i = 0;
     for (auto &arg : function->args())
     {
-        arg.setName(func->params[i].name);
-        m_namedValues[func->params[i].name] = &arg;
+        arg.setName(node.params[i].name);
+        m_namedValues[node.params[i].name] = &arg;
         ++i;
     }
 
-    GenerateStatement(func->body);
+    if (node.body)
+    {
+        node.body->Accept(*this);
+    }
 
-    if (func->returnType.name == "void")
+    if (node.returnType.name == "void")
     {
         m_IRBuilder.CreateRetVoid();
     }
 
     llvm::verifyFunction(*function);
-    return function;
+}
+void CodeGenerator::VisitInterfaceDecl(InterfaceDecl &) {}
+void CodeGenerator::VisitStructDecl(StructDecl &) {}
+void CodeGenerator::VisitVariableDecl(VariableDecl &) {}
 }
 
-llvm::Value *CodeGenerator::GenerateStatement(std::shared_ptr<AstNode> stmt)
+void CodeGenerator::VisitIfStatement(IfStatement &)
 {
-    switch (stmt->type)
+    node.condition->Accept(*this);
+    llvm::Value *isConditionalValue = m_LastValue;
+
+    if (!isConditionalValue)
     {
-    case NodeType::BlockStatement: {
-        auto block = std::static_pointer_cast<BlockStatement>(stmt);
-        for (const auto &s : block->statements)
-        {
-            GenerateStatement(s);
-        }
-        break;
-    }
-    case NodeType::ExprStatement: {
-        auto exprStmt = std::static_pointer_cast<ExprStatement>(stmt);
-        return GenerateExpression(exprStmt->expression);
-    }
-    default:
-        // TODO: Add other statement types like IfStatement, ReturnStatement
-        break;
+        JLANG_ERROR("Invalid condition in if statement");
     }
 
-    return nullptr;
+    if (isConditionalValue->getType()->isIntegerTy(32))
+    {
+        isConditionalValue = m_IRBuilder.CreateICmpNE(
+            isConditionalValue, llvm::ConstantInt::get(isConditionalValue->getType(), 0), "ifcond");
+    }
+
+    llvm::Function *parentFunction = m_IRBuilder.GetInsertBlock()->getParent();
+
+    llvm::BasicBlock *thenBlock = llvm::BasicBlock::Create(m_Context, "then", parentFunction);
+    llvm::BasicBlock *elseBlock = llvm::BasicBlock::Create(m_Context, "else");
+    llvm::BasicBlock *mergeBlock = llvm::BasicBlock::Create(m_Context, "ifcont");
+
+    m_IRBuilder.CreateCondBr(isConditionalValue, thenBlock, elseBlock);
+
+    m_IRBuilder.SetInsertPoint(thenBlock);
+    node.thenBranch->Accept(*this);
+    m_IRBuilder.CreateBr(mergeBlock);
+
+    parentFunction->getBasicBlockList().push_back(elseBlock);
+    m_IRBuilder.SetInsertPoint(elseBlock);
+    if (node.elseBranch)
+    {
+        node.elseBranch->Accept(*this);
+    }
+    m_IRBuilder.CreateBr(mergeBlock);
+
+    parentFunction->getBasicBlockList().push_back(mergeBlock);
+    m_IRBuilder.SetInsertPoint(mergeBlock);
 }
 
-llvm::Value *CodeGenerator::GenerateExpression(std::shared_ptr<AstNode> expr)
+void CodeGenerator::VisitBlockStatement(BlockStatement &)
 {
-    switch (expr->type)
+    for (auto &statement : node.statements)
     {
-    case NodeType::VarExpr: {
-        auto var = std::static_pointer_cast<VarExpr>(expr);
-        return m_namedValues[var->name];
-    }
-    case NodeType::LiteralExpr: {
-        auto literal = std::static_pointer_cast<LiteralExpr>(expr);
-        return m_IRBuilder.CreateGlobalStringPtr(literal->value);
-    }
-    case NodeType::CallExpr: {
-        auto call = std::static_pointer_cast<CallExpr>(expr);
-        llvm::Function *callee = m_Module->getFunction(call->callee);
-
-        if (!callee)
+        if (stmt)
         {
-            JLANG_ERROR(TEXT("Unknown function: %s", call->callee.c_str()));
-            return nullptr;
+            statement->Accept(*this);
         }
+    }
+}
 
-        std::vector<llvm::Value *> args;
-        for (const auto &arg : call->arguments)
+void CodeGenerator::VisitExprStatement(ExprStatement &) {}
+
+void CodeGenerator::VisitCallExpr(CallExpr &) {}
+
+void CodeGenerator::VisitBinaryExpr(BinaryExpr &) {}
+
+void CodeGenerator::VisitLiteralExpr(LiteralExpr &) {}
+
+void CodeGenerator::VisitCallExpr(BinaryExpr &)
+{
+    llvm::Function *callee = m_Module->getFunction(node.callee);
+
+    if (!callee)
+    {
+        JLANG_ERROR(STR("Unknown function: %s", node.callee.c_str()));
+    }
+
+    std::vector<llvm::Value *> args;
+
+    for (auto &arg : node.arguments)
+    {
+        arg->Accept(*this);
+
+        if (!m_LastValue)
         {
-            args.push_back(GenerateExpression(arg));
+            JLANG_ERROR(STR("Invalid argument in call to %s", node.callee.c_str()));
         }
-
-        return m_IRBuilder.CreateCall(callee, args, call->callee + "_call");
-    }
-    default:
-        break;
+        args.push_back(m_LastValue);
     }
 
-    return nullptr;
+    m_LastValue = m_IRBuilder.CreateCall(callee, args, node.callee + "_call");
+}
+
+void CodeGenerator::VisitVarExpr(VarExpr &)
+{
+    auto it = m_namedValues.find(node.name);
+
+    if (it == m_namedValues.end())
+    {
+        JLANG_ERROR(STR("Undefined variable: %s", node.name.c_str()));
+    }
+
+    m_LastValue = it->second;
+}
+
+void CodeGenerator::VisitCastExpr(CastExpr &)
+{
+    node.expr->Accept(*this);
+    llvm::Value *valueToCast = m_LastValue;
+
+    if (!valueToCast)
+    {
+        JLANG_ERROR("Invalid expression in cast");
+    }
+
+    llvm::Type *targetLLVMType = MapType(node.targetType);
+
+    if (!targetLLVMType)
+    {
+        JLANG_ERROR("Unknown target type in cast");
+    }
+
+    bool isPointerToPointerCast = valueToCast->getType()->isPointerTy() && targetLLVMType->isPointerTy();
+
+    if (isPointerToPointerCast)
+    {
+        m_LastValue = m_IRBuilder.CreateBitCast(valueToCast, targetLLVMType, "ptrcast");
+    }
+    else
+    {
+        JLANG_ERROR(STR("Unsupported cast from %s to %s",
+                        valueToCast->getType()->getStructName().str().c_str(),
+                        targetLLVMType->getStructName().str().c_str()));
+    }
 }
 
 llvm::Type *CodeGenerator::MapType(const TypeRef &typeRef)
@@ -146,11 +214,6 @@ llvm::Type *CodeGenerator::MapType(const TypeRef &typeRef)
     }
 
     return llvm::Type::getVoidTy(m_Context);
-}
-
-void CodeGenerator::DumpIR()
-{
-    m_Module->print(llvm::outs(), nullptr);
 }
 
 } // namespace jlang
