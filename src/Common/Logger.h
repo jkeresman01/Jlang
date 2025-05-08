@@ -56,7 +56,8 @@ class Logger
                               uint32_t lineNumber, const char *file)
     {
         log << "[";
-        log << " JLANG " log << "] ";
+        log << " JLANG ";
+        log << "] ";
 
         std::ostringstream location;
         location << "[" << file << ":" << lineNumber << "]";
