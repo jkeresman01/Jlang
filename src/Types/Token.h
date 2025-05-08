@@ -18,9 +18,9 @@ struct Token
     {
         std::stringstream ss;
 
-        ss << token.m_CurrentLine << ": ";
-        ss << token.m_lexeme;
-        ss << " (" << static_cast<int32_t>(token.m_type) << ")";
+        ss << m_CurrentLine << ": ";
+        ss << m_lexeme;
+        ss << " (" << static_cast<int32_t>(m_type) << ")";
 
         return ss.str();
     }
