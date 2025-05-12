@@ -111,7 +111,7 @@ void CodeGenerator::VisitBlockStatement(BlockStatement &)
 {
     for (auto &statement : node.statements)
     {
-        if (stmt)
+        if (statement)
         {
             statement->Accept(*this);
         }
