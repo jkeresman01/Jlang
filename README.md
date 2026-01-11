@@ -1,16 +1,26 @@
-<p align="center">
-  <img src="resources/JlangLogo.png" width="180" alt="Jlang Logo">
-</p>
+<div align="center">
 
-<p align="center">
-  <em>A procedural programming language inspired by C and Go.</em>
-</p>
+  <img src="resources/JlangLogo.png" width="180" alt="Jlang Logo">
+
+  <h1>jlang</h1>
+
+  <h4>A procedural programming language mostly inspired by C and Go</h4>
+  <h6><i>Clean syntax, explicit memory management, and modern language features compiled to native code via LLVM.</i></h6>
+
+[![C++](https://img.shields.io/badge/C++-blue.svg?style=for-the-badge&logo=cplusplus)](https://isocpp.org/)
+[![LLVM](https://img.shields.io/badge/LLVM-262D3A.svg?style=for-the-badge&logo=llvm)](https://llvm.org/)
+
+</div>
 
 ## Getting Started
 
+> [!NOTE]
+> This project is still very much a work in progress. Syntax and features may change.
+
 ### Prerequisites
 
-You need LLVM installed on your system:
+> [!IMPORTANT]
+> You must have LLVM installed on your system to build Jlang.
 
 **Ubuntu/Debian:**
 ```bash
@@ -35,10 +45,11 @@ cmake ..
 make
 ```
 
-Or from the project root:
-```bash
-cmake -B build && cmake --build build
-```
+> [!TIP]
+> For a quicker one-liner from the project root:
+> ```bash
+> cmake -B build && cmake --build build
+> ```
 
 ### Run
 
@@ -48,7 +59,7 @@ cmake -B build && cmake --build build
 
 ## Language Syntax
 
-```
+```rust
 interface IPrintable {
     fn print();
 }
@@ -83,7 +94,7 @@ Jlang's syntax is designed to be clean, explicit, and familiar to developers com
 
 ### Functions: `fn` keyword with trailing return type
 
-```
+```rust
 fn add(a: i32, b: i32) -> i32 {
     return a + b;
 }
@@ -93,7 +104,7 @@ The `fn` keyword is concise and widely recognized. Trailing return types (using 
 
 ### Variables: `var` with colon-separated types
 
-```
+```rust
 var name: char* = "Jlang";
 var count: i32 = 42;
 ```
@@ -102,7 +113,7 @@ The colon syntax (`name: Type`) clearly separates identifiers from types and is 
 
 ### Structs: colon for interface implementation
 
-```
+```rust
 struct Person : IPrintable {
     firstName: char*;
     age: i32;
@@ -113,7 +124,7 @@ Using `:` for interface implementation follows C++/C# conventions and avoids ove
 
 ### Methods: explicit `self` parameter
 
-```
+```rust
 fn print(self: Person*) {
     jout("Name: %s", self.firstName);
 }
@@ -127,21 +138,27 @@ All statements must end with a semicolon. This makes parsing unambiguous and ali
 
 ### Null: lowercase `null`
 
-```
+```rust
 if (p == null) { ... }
 ```
 
 Using lowercase `null` is consistent with most modern languages (Java, C#, JavaScript) and feels more natural than the C macro `NULL`.
 
+> [!TIP]
+> Always check if `alloc<T>()` returns `null` before using the pointer.
+
 ### Memory: manual management
 
-```
+```rust
 var p: Person* = alloc<Person>();
 // ... use p ...
 free(p);
 ```
 
 Jlang uses explicit manual memory management with `alloc<T>()` and `free()`. This gives developers full control over memory and keeps the language simple without requiring a garbage collector or complex ownership system.
+
+> [!IMPORTANT]
+> You are responsible for freeing all allocated memory. Forgetting to call `free()` will cause memory leaks.
 
 ### Primitive types
 
