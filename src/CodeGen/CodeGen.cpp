@@ -137,6 +137,7 @@ void CodeGenerator::VisitIfStatement(IfStatement &node)
     if (!isConditionalValue)
     {
         JLANG_ERROR("Invalid condition in if statement");
+        return;
     }
 
     if (isConditionalValue->getType()->isIntegerTy(32))
