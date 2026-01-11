@@ -1,7 +1,5 @@
 <div align="center">
 
-  <img src="resources/JlangLogo.png" width="180" alt="Jlang Logo">
-
   <h1>jlang</h1>
 
   <h4>A procedural programming language mostly inspired by C and Go</h4>
