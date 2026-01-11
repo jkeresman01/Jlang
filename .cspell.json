@@ -15,6 +15,8 @@
     "ifcont",
     "ptreq",
     "ptrne",
-    "Unqual"
+    "Unqual",
+    "alloc",
+    "Structs"
   ]
 }
