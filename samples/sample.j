@@ -8,8 +8,8 @@ struct Person : IPrintable {
 }
 
 fn print(self: Person*) {
-    jout("First name: %s", self.firstName);
-    jout("Age: %d", self.age);
+    printf("First name: %s", self.firstName);
+    printf("Age: %d", self.age);
 }
 
 struct Frog : IPrintable {
@@ -18,17 +18,17 @@ struct Frog : IPrintable {
 }
 
 fn print(self: Frog*) {
-    jout("Frogs name: %s", self.name);
-    jout("Age: %d", self.age);
+    printf("Frogs name: %s", self.name);
+    printf("Age: %d", self.age);
 }
 
 fn main() -> i32 {
     var person: Person* = alloc<Person>();
 
     if (person == null) {
-        jout("No can do");
+        printf("No can do");
     } else {
-        jout("Incredible");
+        printf("Incredible");
     }
 
     free(person);

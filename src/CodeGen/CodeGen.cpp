@@ -42,24 +42,15 @@ void CodeGenerator::DeclareExternalFunctions()
         llvm::FunctionType::get(llvm::Type::getInt32Ty(m_Context), {ptrType}, true);
     llvm::Function::Create(printfType, llvm::Function::ExternalLinkage, "printf", m_Module.get());
 
-    // Declare jout as alias to printf: int jout(const char*, ...)
-    llvm::Function::Create(printfType, llvm::Function::ExternalLinkage, "jout", m_Module.get());
-
     // Declare malloc: void* malloc(size_t)
     llvm::FunctionType *mallocType =
         llvm::FunctionType::get(ptrType, {llvm::Type::getInt64Ty(m_Context)}, false);
     llvm::Function::Create(mallocType, llvm::Function::ExternalLinkage, "malloc", m_Module.get());
 
-    // Declare jalloc as alias to malloc
-    llvm::Function::Create(mallocType, llvm::Function::ExternalLinkage, "jalloc", m_Module.get());
-
     // Declare free: void free(void*)
     llvm::FunctionType *freeType =
         llvm::FunctionType::get(llvm::Type::getVoidTy(m_Context), {ptrType}, false);
     llvm::Function::Create(freeType, llvm::Function::ExternalLinkage, "free", m_Module.get());
-
-    // Declare jfree as alias to free
-    llvm::Function::Create(freeType, llvm::Function::ExternalLinkage, "jfree", m_Module.get());
 }
 
 void CodeGenerator::DumpIR()

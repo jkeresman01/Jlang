@@ -68,17 +68,17 @@ struct Person : IPrintable {
 }
 
 fn print(self: Person*) {
-    jout("First name: %s", self.firstName);
-    jout("Age: %d", self.age);
+    printf("First name: %s", self.firstName);
+    printf("Age: %d", self.age);
 }
 
 fn main() -> i32 {
     var p: Person* = alloc<Person>();
 
     if (p == null) {
-        jout("No can do");
+        printf("No can do");
     } else {
-        jout("Incredible");
+        printf("Incredible");
     }
 
     free(p);
@@ -124,7 +124,7 @@ struct Person : IPrintable {
 
 ```rust
 fn print(self: Person*) {
-    jout("Name: %s", self.firstName);
+    printf("Name: %s", self.firstName);
 }
 ```
 
