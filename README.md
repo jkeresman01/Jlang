@@ -86,7 +86,7 @@ fn main() -> i32 {
 }
 ```
 
-## Syntax Design Decisions
+### Syntax Design Decisions
 
 <h6><i>Jlang's syntax is designed to be clean, explicit, and familiar to developers coming from C, Go, or Rust.</i></h6>
 
