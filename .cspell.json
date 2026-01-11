@@ -7,6 +7,14 @@
     "ptrcast",
     "GTEST",
     "pthread",
-    "Tokenizes"
+    "Tokenizes",
+    "Jlang",
+    "jout",
+    "jalloc",
+    "jfree",
+    "ifcont",
+    "ptreq",
+    "ptrne",
+    "Unqual"
   ]
 }
