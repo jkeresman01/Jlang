@@ -45,6 +45,7 @@ class CodeGenerator : public AstVisitor
     virtual void VisitCastExpr(CastExpr &) override;
 
   private:
+    void DeclareExternalFunctions();
     llvm::Type *MapType(const TypeRef &typeRef);
 
   private:

@@ -17,6 +17,11 @@ std::vector<Token> Lexer::Tokenize()
 {
     while (!IsEndReached())
     {
+        SkipWhitespace();
+        if (IsEndReached())
+        {
+            break;
+        }
         m_Start = m_CurrentPosition;
         ScanToken();
     }
@@ -27,13 +32,6 @@ std::vector<Token> Lexer::Tokenize()
 
 void Lexer::ScanToken()
 {
-    SkipWhitespace();
-
-    if (IsEndReached())
-    {
-        return;
-    }
-
     char c = Advance();
 
     switch (c)
@@ -135,11 +133,6 @@ char Lexer::Peek() const
     return IsEndReached() ? '\0' : m_Source[m_CurrentPosition];
 }
 
-char Lexer::PeekNext() const
-{
-    return (m_CurrentPosition + 1 >= m_Source.length()) ? '\0' : m_Source[m_CurrentPosition + 1];
-}
-
 bool Lexer::IsMatched(char expected)
 {
     if (IsEndReached() || m_Source[m_CurrentPosition] != expected)
@@ -174,7 +167,7 @@ void Lexer::AddIdentifier()
     }
 
     std::string text = m_Source.substr(m_Start, m_CurrentPosition - m_Start);
-    TokenType type = IsKeywordOrIndetifier(text);
+    TokenType type = IsKeywordOrIdentifier(text);
 
     AddToken(type, text);
 }
@@ -213,10 +206,15 @@ void Lexer::AddStringLiteral()
     AddToken(TokenType::StringLiteral, value);
 }
 
-TokenType Lexer::IsKeywordOrIndetifier(const std::string &text)
+TokenType Lexer::IsKeywordOrIdentifier(const std::string &text)
 {
-    auto it = s_Keywords.find(text);
-    return it != s_Keywords.end() ? it->second : TokenType::Identifier;
+    static const std::unordered_map<std::string, TokenType> keywords = {
+        {"interface", TokenType::Interface}, {"struct", TokenType::Struct}, {"void", TokenType::Void},
+        {"int32", TokenType::Int32},         {"var", TokenType::Var},       {"if", TokenType::If},
+        {"else", TokenType::Else},           {"return", TokenType::Return}};
+
+    auto it = keywords.find(text);
+    return it != keywords.end() ? it->second : TokenType::Identifier;
 }
 
 } // namespace jlang

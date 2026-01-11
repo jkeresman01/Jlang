@@ -35,7 +35,7 @@ struct ExprStatement : public Statement
 
     ExprStatement() { type = NodeType::ExprStatement; }
 
-    void Accept(AstVisitor &visitor) override { visitor.VisitExprStatement(*this) : }
+    void Accept(AstVisitor &visitor) override { visitor.VisitExprStatement(*this); }
 };
 
 } // namespace jlang

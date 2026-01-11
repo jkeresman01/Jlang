@@ -1,3 +1,4 @@
+#include "CodeGen/CodeGen.h"
 #include "Lexer/Lexer.h"
 #include "Parser/Parser.h"
 
@@ -6,6 +7,11 @@
 #include <sstream>
 
 using namespace jlang;
+
+// Forward declarations
+void TryLexer();
+void TryParser();
+void TryCodeGen();
 
 // std::filesystem::path is better here, but don't care, it's for testing, if you have C++17
 // It would have taken me less time to replace it than to type this out
@@ -29,13 +35,13 @@ std::string Load(const std::string &path)
 void TryAllThis()
 {
     TryLexer();
-    // TryParser();
-    // TryCodeGen();
+    TryParser();
+    TryCodeGen();
 }
 
 void TryLexer()
 {
-    std::string sourceCode = Load("../samples/sample.j");
+    std::string sourceCode = Load("../samples/simple.j");
 
     Lexer lexer(sourceCode);
     const std::vector<Token> &tokens = lexer.Tokenize();
@@ -48,17 +54,37 @@ void TryLexer()
     }
 }
 
+void TryParser()
+{
+    std::string sourceCode = Load("../samples/simple.j");
+
+    Lexer lexer(sourceCode);
+    const std::vector<Token> &tokens = lexer.Tokenize();
+
+    Parser parser(tokens);
+    std::vector<std::shared_ptr<AstNode>> program = parser.Parse();
+
+    std::cout << "\r\nParsed " << program.size() << " top-level declarations\r\n";
+}
+
+void TryCodeGen()
+{
+    std::string sourceCode = Load("../samples/simple.j");
+
+    Lexer lexer(sourceCode);
+    const std::vector<Token> &tokens = lexer.Tokenize();
+
+    Parser parser(tokens);
+    std::vector<std::shared_ptr<AstNode>> program = parser.Parse();
+
+    std::cout << "\r\n--- LLVM IR ---\r\n";
+
+    CodeGenerator codegen;
+    codegen.Generate(program);
+    codegen.DumpIR();
+}
+
 int main()
 {
-    try
-    {
-        TryAllThis();
-    }
-    catch (const std::exception &ex)
-    {
-        std::cout << "Stativa \r\n";
-        return 1;
-    }
-
-    return 0;
+    TryAllThis();
 }

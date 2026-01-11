@@ -1,6 +1,10 @@
 #pragma once
 
+#include <fstream>
+#include <iomanip>
 #include <iostream>
+#include <sstream>
+
 #include <llvm/IR/Value.h>
 
 #define MAX_BUFFER_SIZE 256
@@ -25,6 +29,11 @@ inline llvm::Value *LogErrorV(const char *message)
 {
     std::cerr << "JLANG ERROR: " << message << std::endl;
     return nullptr;
+}
+
+inline llvm::Value *LogErrorV(const std::string &message)
+{
+    return LogErrorV(message.c_str());
 }
 
 namespace jlang

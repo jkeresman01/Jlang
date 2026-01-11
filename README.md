@@ -6,8 +6,47 @@
   <em>A procedural programming language inspired by C and Go.</em>
 </p>
 
+## Getting Started
 
-## Langauge syntax ##
+### Prerequisites
+
+You need LLVM installed on your system:
+
+**Ubuntu/Debian:**
+```bash
+sudo apt install llvm-dev
+```
+
+**Fedora:**
+```bash
+sudo dnf install llvm-devel
+```
+
+**macOS:**
+```bash
+brew install llvm
+```
+
+### Build
+
+```bash
+mkdir -p build && cd build
+cmake ..
+make
+```
+
+Or from the project root:
+```bash
+cmake -B build && cmake --build build
+```
+
+### Run
+
+```bash
+./build/Jlang samples/sample.j
+```
+
+## Language syntax
 
 ```Go
 interface IPrintable

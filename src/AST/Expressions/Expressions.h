@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../Ast.h"
+#include "../TopLevelDecl/TopLevelDecl.h"
 
 namespace jlang
 {

@@ -1,5 +1,11 @@
 #pragma once
 
+#include "../Enums/TokenTypes.h"
+
+#include <cstdint>
+#include <sstream>
+#include <string>
+
 namespace jlang
 {
 
@@ -9,8 +15,8 @@ struct Token
     std::string m_lexeme;
     uint32_t m_CurrentLine;
 
-    Token(const TokenType type, const std::string lexeme, uint32_t const currentLine)
-        : m_type(type), m_lexeme(std::move(lexeme)), m_CurrentLine(currentLine)
+    Token(const TokenType type, const std::string &lexeme, uint32_t const currentLine)
+        : m_type(type), m_lexeme(lexeme), m_CurrentLine(currentLine)
     {
     }
 

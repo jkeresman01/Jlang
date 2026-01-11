@@ -1,6 +1,10 @@
 #pragma once
 
 #include "../AST/Ast.h"
+#include "../AST/Expressions/Expressions.h"
+#include "../AST/Statements/Statements.h"
+#include "../AST/TopLevelDecl/TopLevelDecl.h"
+#include "../Types/Token.h"
 
 #include <memory>
 #include <optional>
@@ -31,7 +35,9 @@ class Parser
     std::shared_ptr<AstNode> ParseStatement();
     std::shared_ptr<AstNode> ParseBlock();
     std::shared_ptr<AstNode> ParseIfStatement();
+    std::shared_ptr<AstNode> ParseVarDecl();
     std::shared_ptr<AstNode> ParseExpression();
+    std::shared_ptr<AstNode> ParseEquality();
     std::shared_ptr<AstNode> ParseExprStatement();
     std::shared_ptr<AstNode> ParsePrimary();
 

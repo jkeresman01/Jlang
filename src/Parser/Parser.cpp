@@ -99,7 +99,7 @@ std::shared_ptr<AstNode> Parser::ParseInterface()
 
     if (!IsMatched(TokenType::Identifier))
     {
-        JLANG_ERROR("Expected interaface name");
+        JLANG_ERROR("Expected interface name");
     }
 
     const std::string &name = Previous().m_lexeme;
@@ -116,26 +116,34 @@ std::shared_ptr<AstNode> Parser::ParseInterface()
     {
         if (!IsMatched(TokenType::Void))
         {
-            if (!IsMatched(TokenType::Void))
-            {
-                JLANG_ERROR("Expected 'void' in interface method");
-            }
-
-            if (!IsMatched(TokenType::Identifier))
-            {
-                JLANG_ERROR("Expected method name");
-            }
-
-            std::string methodName = Previous().m_lexeme;
-
-            if (!IsMatched(TokenType::LParen) || !IsMatched(TokenType::RParen) ||
-                !IsMatched(TokenType::Semicolon))
-            {
-                JLANG_ERROR("Expected '()' and ';' after method name");
-            }
-
-            interfaceDeclNode->methods.push_back(methodName);
+            JLANG_ERROR("Expected 'void' in interface method");
+            Advance(); // error recovery
+            continue;
         }
+
+        if (!IsMatched(TokenType::Identifier))
+        {
+            JLANG_ERROR("Expected method name");
+            Advance(); // error recovery
+            continue;
+        }
+
+        std::string methodName = Previous().m_lexeme;
+
+        if (!IsMatched(TokenType::LParen) || !IsMatched(TokenType::RParen) ||
+            !IsMatched(TokenType::Semicolon))
+        {
+            JLANG_ERROR("Expected '()' and ';' after method name");
+            // Skip to semicolon for error recovery
+            while (!IsEndReached() && !Check(TokenType::Semicolon) && !Check(TokenType::RBrace))
+            {
+                Advance();
+            }
+            IsMatched(TokenType::Semicolon);
+            continue;
+        }
+
+        interfaceDeclNode->methods.push_back(methodName);
     }
 
     if (!IsMatched(TokenType::RBrace))
@@ -183,16 +191,39 @@ std::shared_ptr<AstNode> Parser::ParseStruct()
         if (!IsMatched(TokenType::Identifier))
         {
             JLANG_ERROR("Expected field name");
+            // Skip to next semicolon or brace
+            while (!IsEndReached() && !Check(TokenType::Semicolon) && !Check(TokenType::RBrace))
+            {
+                Advance();
+            }
+            IsMatched(TokenType::Semicolon);
+            continue;
         }
 
         std::string fieldName = Previous().m_lexeme;
 
-        if (!IsMatched(TokenType::Identifier))
+        // Field type can be an identifier or a type keyword
+        std::string typeName;
+        if (IsMatched(TokenType::Identifier))
+        {
+            typeName = Previous().m_lexeme;
+        }
+        else if (IsMatched(TokenType::Int32))
+        {
+            typeName = "int32";
+        }
+        else
         {
             JLANG_ERROR("Expected field type");
+            // Skip to next semicolon or brace
+            while (!IsEndReached() && !Check(TokenType::Semicolon) && !Check(TokenType::RBrace))
+            {
+                Advance();
+            }
+            IsMatched(TokenType::Semicolon);
+            continue;
         }
 
-        std::string typeName = Previous().m_lexeme;
         bool isPointer = false;
 
         if (IsMatched(TokenType::Star))
@@ -253,7 +284,7 @@ std::shared_ptr<AstNode> Parser::ParseFunction()
     {
         if (!IsMatched(TokenType::Identifier))
         {
-            JLANG_ERROR("Expected paramter type identifier '->' ");
+            JLANG_ERROR("Expected parameter type identifier '->' ");
         }
 
         const std::string &paramType = Previous().m_lexeme;
@@ -261,7 +292,7 @@ std::shared_ptr<AstNode> Parser::ParseFunction()
 
         if (!IsMatched(TokenType::Identifier))
         {
-            JLANG_ERROR("Expected paramter name!");
+            JLANG_ERROR("Expected parameter name!");
         }
 
         const std::string &paramName = Previous().m_lexeme;
@@ -309,7 +340,78 @@ std::shared_ptr<AstNode> Parser::ParseBlock()
 
 std::shared_ptr<AstNode> Parser::ParseStatement()
 {
-    return std::shared_ptr<AstNode>();
+    if (Check(TokenType::If))
+    {
+        return ParseIfStatement();
+    }
+
+    if (Check(TokenType::Var))
+    {
+        return ParseVarDecl();
+    }
+
+    if (Check(TokenType::LBrace))
+    {
+        return ParseBlock();
+    }
+
+    return ParseExprStatement();
+}
+
+std::shared_ptr<AstNode> Parser::ParseVarDecl()
+{
+    Advance(); // consume 'var'
+
+    if (!IsMatched(TokenType::Identifier))
+    {
+        JLANG_ERROR("Expected variable name");
+        Advance(); // error recovery
+        return nullptr;
+    }
+
+    std::string varName = Previous().m_lexeme;
+
+    // Type can be an identifier or a type keyword like int32, void, etc.
+    std::string typeName;
+    if (IsMatched(TokenType::Identifier))
+    {
+        typeName = Previous().m_lexeme;
+    }
+    else if (IsMatched(TokenType::Int32))
+    {
+        typeName = "int32";
+    }
+    else if (IsMatched(TokenType::Void))
+    {
+        typeName = "void";
+    }
+    else
+    {
+        JLANG_ERROR("Expected variable type");
+        Advance(); // error recovery
+        return nullptr;
+    }
+
+    bool isPointer = IsMatched(TokenType::Star);
+
+    std::shared_ptr<AstNode> initializer = nullptr;
+
+    if (IsMatched(TokenType::Equal))
+    {
+        initializer = ParseExpression();
+    }
+
+    if (!IsMatched(TokenType::Semicolon))
+    {
+        JLANG_ERROR("Expected ';' after variable declaration");
+    }
+
+    auto varDecl = std::make_shared<VariableDecl>();
+    varDecl->name = varName;
+    varDecl->varType = TypeRef{typeName, isPointer};
+    varDecl->initializer = initializer;
+
+    return varDecl;
 }
 
 std::shared_ptr<AstNode> Parser::ParseIfStatement()
@@ -347,22 +449,43 @@ std::shared_ptr<AstNode> Parser::ParseIfStatement()
 
 std::shared_ptr<AstNode> Parser::ParseExpression()
 {
-    auto expersion = ParseExpression();
+    return ParseEquality();
+}
 
-    if (!IsMatched(TokenType::Semicolon))
+std::shared_ptr<AstNode> Parser::ParseEquality()
+{
+    auto left = ParsePrimary();
+
+    while (Check(TokenType::EqualEqual) || Check(TokenType::NotEqual))
     {
-        JLANG_ERROR("Expected ';' after expression");
+        std::string op = Peek().m_lexeme;
+        Advance();
+        auto right = ParsePrimary();
+
+        auto binary = std::make_shared<BinaryExpr>();
+        binary->op = op;
+        binary->left = left;
+        binary->right = right;
+        left = binary;
     }
 
-    auto stmt = std::make_shared<ExprStatement>();
-    stmt->expression = expersion;
-
-    return stmt;
+    return left;
 }
 
 std::shared_ptr<AstNode> Parser::ParseExprStatement()
 {
     auto expression = ParseExpression();
+
+    if (!expression)
+    {
+        // Skip until we find a semicolon or closing brace for error recovery
+        while (!IsEndReached() && !Check(TokenType::Semicolon) && !Check(TokenType::RBrace))
+        {
+            Advance();
+        }
+        IsMatched(TokenType::Semicolon);
+        return nullptr;
+    }
 
     if (!IsMatched(TokenType::Semicolon))
     {
@@ -377,17 +500,111 @@ std::shared_ptr<AstNode> Parser::ParseExprStatement()
 
 std::shared_ptr<AstNode> Parser::ParsePrimary()
 {
+    // Handle cast expressions: (struct Type*) expr or (Type*) expr
+    if (IsMatched(TokenType::LParen))
+    {
+        // Check if this is a cast or a grouped expression
+        if (Check(TokenType::Struct) || Check(TokenType::Identifier))
+        {
+            // This is likely a cast expression
+            IsMatched(TokenType::Struct);
 
+            if (!IsMatched(TokenType::Identifier))
+            {
+                JLANG_ERROR("Expected type name in cast");
+                return nullptr;
+            }
+
+            std::string typeName = Previous().m_lexeme;
+            bool isPointer = IsMatched(TokenType::Star);
+
+            if (!IsMatched(TokenType::RParen))
+            {
+                JLANG_ERROR("Expected ')' after cast type");
+                return nullptr;
+            }
+
+            auto expr = ParsePrimary();
+
+            auto cast = std::make_shared<CastExpr>();
+            cast->targetType = TypeRef{typeName, isPointer};
+            cast->expr = expr;
+            return cast;
+        }
+        else
+        {
+            // Grouped expression
+            auto expr = ParseExpression();
+            if (!IsMatched(TokenType::RParen))
+            {
+                JLANG_ERROR("Expected ')' after grouped expression");
+            }
+            return expr;
+        }
+    }
+
+    // Handle NULL literal
+    if (Check(TokenType::Identifier) && Peek().m_lexeme == "NULL")
+    {
+        Advance();
+        auto literal = std::make_shared<LiteralExpr>();
+        literal->value = "NULL";
+        return literal;
+    }
+
+    // Handle sizeof(type)
+    if (Check(TokenType::Identifier) && Peek().m_lexeme == "sizeof")
+    {
+        Advance();
+
+        if (!IsMatched(TokenType::LParen))
+        {
+            JLANG_ERROR("Expected '(' after sizeof");
+            return nullptr;
+        }
+
+        IsMatched(TokenType::Struct); // optional struct keyword
+
+        if (!IsMatched(TokenType::Identifier))
+        {
+            JLANG_ERROR("Expected type name in sizeof");
+            return nullptr;
+        }
+
+        if (!IsMatched(TokenType::RParen))
+        {
+            JLANG_ERROR("Expected ')' after sizeof type");
+            return nullptr;
+        }
+
+        // For now, return a literal with the sizeof value (simplified)
+        auto literal = std::make_shared<LiteralExpr>();
+        literal->value = "8"; // Default size, would need proper type system
+        return literal;
+    }
+
+    // Handle identifiers, function calls, and member access
     if (IsMatched(TokenType::Identifier))
     {
-        const std::string &name = Previous().m_lexeme;
+        std::string name = Previous().m_lexeme;
+
+        // Handle member access: p.firstName
+        while (IsMatched(TokenType::Dot))
+        {
+            if (!IsMatched(TokenType::Identifier))
+            {
+                JLANG_ERROR("Expected member name after '.'");
+                break;
+            }
+            name += "." + Previous().m_lexeme;
+        }
 
         if (IsMatched(TokenType::LParen))
         {
             auto call = std::make_shared<CallExpr>();
             call->callee = name;
 
-            if (!IsMatched(TokenType::RParen))
+            if (!Check(TokenType::RParen))
             {
                 do
                 {
@@ -411,21 +628,24 @@ std::shared_ptr<AstNode> Parser::ParsePrimary()
         }
     }
 
-    if (IsMatched(TokenType::Identifier))
-    {
-        auto experssion = std::make_shared<VarExpr>();
-        experssion->name = Previous().m_lexeme;
-        return experssion;
-    }
-
+    // Handle string literals
     if (IsMatched(TokenType::StringLiteral))
     {
-        auto experssion = std::make_shared<LiteralExpr>();
-        experssion->value = Previous().m_lexeme;
-        return experssion;
+        auto expression = std::make_shared<LiteralExpr>();
+        expression->value = "\"" + Previous().m_lexeme + "\"";
+        return expression;
+    }
+
+    // Handle number literals
+    if (IsMatched(TokenType::NumberLiteral))
+    {
+        auto expression = std::make_shared<LiteralExpr>();
+        expression->value = Previous().m_lexeme;
+        return expression;
     }
 
     JLANG_ERROR("Expected expression");
+    return nullptr;
 }
 
 } // namespace jlang

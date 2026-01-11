@@ -1,12 +1,22 @@
 #pragma once
 
-#include "../AST/Ast.h"
-#include "../AST/Expressions/Expressions.h"
-#include "../AST/Statements/Statements.h"
-#include "../AST/TopLevelDecl/TopLevelDecl.h"
-
 namespace jlang
 {
+
+// Forward declarations for AST nodes
+struct FunctionDecl;
+struct InterfaceDecl;
+struct StructDecl;
+struct VariableDecl;
+struct IfStatement;
+struct BlockStatement;
+struct ExprStatement;
+struct CallExpr;
+struct BinaryExpr;
+struct LiteralExpr;
+struct VarExpr;
+struct CastExpr;
+
 class AstVisitor
 {
   public:

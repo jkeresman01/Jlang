@@ -1,0 +1,21 @@
+{
+  "version": "0.2",
+  "language": "en",
+  "words": [
+    "Jlang",
+    "jlang",
+    "JLANG",
+    "jout",
+    "jalloc",
+    "jfree",
+    "ifcont",
+    "ptreq",
+    "ptrne",
+    "Unqual"
+  ],
+  "ignorePaths": [
+    "build/**",
+    "test/build/**",
+    "node_modules/**"
+  ]
+}

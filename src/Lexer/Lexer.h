@@ -21,7 +21,6 @@ class Lexer
     char Advance();
 
     char Peek() const;
-    char PeekNext() const;
 
     bool IsMatched(char expected);
     bool IsEndReached() const;
@@ -35,7 +34,7 @@ class Lexer
 
     void SkipWhitespace();
 
-    TokenType IsKeywordOrIndetifier(const std::string &text);
+    TokenType IsKeywordOrIdentifier(const std::string &text);
 
   private:
     std::vector<Token> m_Tokens;

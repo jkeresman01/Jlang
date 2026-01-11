@@ -2,6 +2,7 @@
 
 #include "../Common/Logger.h"
 
+#include <algorithm>
 #include <iostream>
 
 #include <llvm/IR/Function.h>
@@ -20,20 +21,57 @@ CodeGenerator::CodeGenerator()
 {
 }
 
-void CodeGenerator::Generate(const std::vector<std::shared_ptr<AstNode>> &program) {}
+void CodeGenerator::Generate(const std::vector<std::shared_ptr<AstNode>> &program)
+{
+    DeclareExternalFunctions();
+
+    for (auto &node : program)
+    {
+        if (node)
+        {
+            node->Accept(*this);
+        }
+    }
+}
+
+void CodeGenerator::DeclareExternalFunctions()
+{
+    // Declare printf: int printf(const char*, ...)
+    llvm::FunctionType *printfType = llvm::FunctionType::get(llvm::Type::getInt32Ty(m_Context),
+                                                             {llvm::Type::getInt8PtrTy(m_Context)}, true);
+    llvm::Function::Create(printfType, llvm::Function::ExternalLinkage, "printf", m_Module.get());
+
+    // Declare jout as alias to printf: int jout(const char*, ...)
+    llvm::Function::Create(printfType, llvm::Function::ExternalLinkage, "jout", m_Module.get());
+
+    // Declare malloc: void* malloc(size_t)
+    llvm::FunctionType *mallocType = llvm::FunctionType::get(llvm::Type::getInt8PtrTy(m_Context),
+                                                             {llvm::Type::getInt64Ty(m_Context)}, false);
+    llvm::Function::Create(mallocType, llvm::Function::ExternalLinkage, "malloc", m_Module.get());
+
+    // Declare jalloc as alias to malloc
+    llvm::Function::Create(mallocType, llvm::Function::ExternalLinkage, "jalloc", m_Module.get());
+
+    // Declare free: void free(void*)
+    llvm::FunctionType *freeType = llvm::FunctionType::get(llvm::Type::getVoidTy(m_Context),
+                                                           {llvm::Type::getInt8PtrTy(m_Context)}, false);
+    llvm::Function::Create(freeType, llvm::Function::ExternalLinkage, "free", m_Module.get());
+
+    // Declare jfree as alias to free
+    llvm::Function::Create(freeType, llvm::Function::ExternalLinkage, "jfree", m_Module.get());
+}
 
 void CodeGenerator::DumpIR()
 {
     m_Module->print(llvm::outs(), nullptr);
 }
 
-void CodeGenerator::VisitFunctionDecl(FunctionDecl &)
+void CodeGenerator::VisitFunctionDecl(FunctionDecl &node)
 {
     std::vector<llvm::Type *> paramTypes;
-    for (const auto &param : node.params)
-    {
-        paramTypes.push_back(MapType(param.type));
-    }
+    paramTypes.reserve(node.params.size());
+    std::transform(node.params.begin(), node.params.end(), std::back_inserter(paramTypes),
+                   [this](const Parameter &param) { return MapType(param.type); });
 
     llvm::FunctionType *funcType = llvm::FunctionType::get(MapType(node.returnType), paramTypes, false);
 
@@ -63,11 +101,35 @@ void CodeGenerator::VisitFunctionDecl(FunctionDecl &)
 
     llvm::verifyFunction(*function);
 }
-void CodeGenerator::VisitInterfaceDecl(InterfaceDecl &) {}
-void CodeGenerator::VisitStructDecl(StructDecl &) {}
-void CodeGenerator::VisitVariableDecl(VariableDecl &) {}
 
-void CodeGenerator::VisitIfStatement(IfStatement &)
+void CodeGenerator::VisitInterfaceDecl(InterfaceDecl &) {}
+
+void CodeGenerator::VisitStructDecl(StructDecl &) {}
+
+void CodeGenerator::VisitVariableDecl(VariableDecl &node)
+{
+    llvm::Type *varType = MapType(node.varType);
+
+    llvm::AllocaInst *alloca = m_IRBuilder.CreateAlloca(varType, nullptr, node.name);
+
+    if (node.initializer)
+    {
+        node.initializer->Accept(*this);
+        if (m_LastValue)
+        {
+            if (m_LastValue->getType() != varType && varType->isPointerTy() &&
+                m_LastValue->getType()->isPointerTy())
+            {
+                m_LastValue = m_IRBuilder.CreateBitCast(m_LastValue, varType, "cast");
+            }
+            m_IRBuilder.CreateStore(m_LastValue, alloca);
+        }
+    }
+
+    m_namedValues[node.name] = alloca;
+}
+
+void CodeGenerator::VisitIfStatement(IfStatement &node)
 {
     node.condition->Accept(*this);
     llvm::Value *isConditionalValue = m_LastValue;
@@ -107,7 +169,7 @@ void CodeGenerator::VisitIfStatement(IfStatement &)
     m_IRBuilder.SetInsertPoint(mergeBlock);
 }
 
-void CodeGenerator::VisitBlockStatement(BlockStatement &)
+void CodeGenerator::VisitBlockStatement(BlockStatement &node)
 {
     for (auto &statement : node.statements)
     {
@@ -118,15 +180,15 @@ void CodeGenerator::VisitBlockStatement(BlockStatement &)
     }
 }
 
-void CodeGenerator::VisitExprStatement(ExprStatement &) {}
+void CodeGenerator::VisitExprStatement(ExprStatement &node)
+{
+    if (node.expression)
+    {
+        node.expression->Accept(*this);
+    }
+}
 
-void CodeGenerator::VisitCallExpr(CallExpr &) {}
-
-void CodeGenerator::VisitBinaryExpr(BinaryExpr &) {}
-
-void CodeGenerator::VisitLiteralExpr(LiteralExpr &) {}
-
-void CodeGenerator::VisitCallExpr(BinaryExpr &)
+void CodeGenerator::VisitCallExpr(CallExpr &node)
 {
     llvm::Function *callee = m_Module->getFunction(node.callee);
 
@@ -151,19 +213,128 @@ void CodeGenerator::VisitCallExpr(BinaryExpr &)
     m_LastValue = m_IRBuilder.CreateCall(callee, args, node.callee + "_call");
 }
 
-void CodeGenerator::VisitVarExpr(VarExpr &)
+void CodeGenerator::VisitBinaryExpr(BinaryExpr &node)
+{
+    node.left->Accept(*this);
+    llvm::Value *leftVal = m_LastValue;
+
+    node.right->Accept(*this);
+    llvm::Value *rightVal = m_LastValue;
+
+    if (!leftVal || !rightVal)
+    {
+        JLANG_ERROR("Invalid operands in binary expression");
+        return;
+    }
+
+    if (node.op == "==")
+    {
+        if (leftVal->getType()->isPointerTy() && rightVal->getType()->isPointerTy())
+        {
+            m_LastValue = m_IRBuilder.CreateICmpEQ(leftVal, rightVal, "ptreq");
+        }
+        else if (leftVal->getType()->isIntegerTy() && rightVal->getType()->isIntegerTy())
+        {
+            m_LastValue = m_IRBuilder.CreateICmpEQ(leftVal, rightVal, "eq");
+        }
+        else
+        {
+            JLANG_ERROR("Unsupported types for == comparison");
+        }
+    }
+    else if (node.op == "!=")
+    {
+        if (leftVal->getType()->isPointerTy() && rightVal->getType()->isPointerTy())
+        {
+            m_LastValue = m_IRBuilder.CreateICmpNE(leftVal, rightVal, "ptrne");
+        }
+        else if (leftVal->getType()->isIntegerTy() && rightVal->getType()->isIntegerTy())
+        {
+            m_LastValue = m_IRBuilder.CreateICmpNE(leftVal, rightVal, "ne");
+        }
+        else
+        {
+            JLANG_ERROR("Unsupported types for != comparison");
+        }
+    }
+    else if (node.op == "<")
+    {
+        m_LastValue = m_IRBuilder.CreateICmpSLT(leftVal, rightVal, "lt");
+    }
+    else if (node.op == ">")
+    {
+        m_LastValue = m_IRBuilder.CreateICmpSGT(leftVal, rightVal, "gt");
+    }
+    else if (node.op == "+")
+    {
+        m_LastValue = m_IRBuilder.CreateAdd(leftVal, rightVal, "add");
+    }
+    else if (node.op == "-")
+    {
+        m_LastValue = m_IRBuilder.CreateSub(leftVal, rightVal, "sub");
+    }
+    else if (node.op == "*")
+    {
+        m_LastValue = m_IRBuilder.CreateMul(leftVal, rightVal, "mul");
+    }
+    else if (node.op == "/")
+    {
+        m_LastValue = m_IRBuilder.CreateSDiv(leftVal, rightVal, "div");
+    }
+    else
+    {
+        JLANG_ERROR(STR("Unknown binary operator: %s", node.op.c_str()));
+    }
+}
+
+void CodeGenerator::VisitLiteralExpr(LiteralExpr &node)
+{
+    if (node.value == "NULL" || node.value == "null" || node.value == "nullptr")
+    {
+        m_LastValue = llvm::ConstantPointerNull::get(llvm::Type::getInt8PtrTy(m_Context));
+    }
+    else if (node.value.front() == '"' && node.value.back() == '"')
+    {
+        std::string strValue = node.value.substr(1, node.value.size() - 2);
+        m_LastValue = m_IRBuilder.CreateGlobalStringPtr(strValue, "str");
+    }
+    else
+    {
+        try
+        {
+            int64_t intValue = std::stoll(node.value);
+            m_LastValue = llvm::ConstantInt::get(llvm::Type::getInt32Ty(m_Context), intValue);
+        }
+        catch (...)
+        {
+            JLANG_ERROR(STR("Unknown literal: %s", node.value.c_str()));
+        }
+    }
+}
+
+void CodeGenerator::VisitVarExpr(VarExpr &node)
 {
     auto it = m_namedValues.find(node.name);
 
     if (it == m_namedValues.end())
     {
         JLANG_ERROR(STR("Undefined variable: %s", node.name.c_str()));
+        return;
     }
 
-    m_LastValue = it->second;
+    llvm::Value *val = it->second;
+
+    if (llvm::AllocaInst *alloca = llvm::dyn_cast<llvm::AllocaInst>(val))
+    {
+        m_LastValue = m_IRBuilder.CreateLoad(alloca->getAllocatedType(), alloca, node.name);
+    }
+    else
+    {
+        m_LastValue = val;
+    }
 }
 
-void CodeGenerator::VisitCastExpr(CastExpr &)
+void CodeGenerator::VisitCastExpr(CastExpr &node)
 {
     node.expr->Accept(*this);
     llvm::Value *valueToCast = m_LastValue;
@@ -188,9 +359,7 @@ void CodeGenerator::VisitCastExpr(CastExpr &)
     }
     else
     {
-        JLANG_ERROR(STR("Unsupported cast from %s to %s",
-                        valueToCast->getType()->getStructName().str().c_str(),
-                        targetLLVMType->getStructName().str().c_str()));
+        JLANG_ERROR("Unsupported cast");
     }
 }
 
