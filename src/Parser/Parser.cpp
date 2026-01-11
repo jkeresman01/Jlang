@@ -693,11 +693,9 @@ std::shared_ptr<AstNode> Parser::ParsePrimary()
 bool Parser::IsTypeKeyword() const
 {
     static const std::unordered_set<TokenType> typeKeywords = {
-        TokenType::Void, TokenType::I8,  TokenType::I16, TokenType::I32,
-        TokenType::I64,  TokenType::U8,  TokenType::U16, TokenType::U32,
-        TokenType::U64,  TokenType::F32, TokenType::F64, TokenType::Bool,
-        TokenType::Char
-    };
+        TokenType::Void, TokenType::I8,   TokenType::I16, TokenType::I32, TokenType::I64,
+        TokenType::U8,   TokenType::U16,  TokenType::U32, TokenType::U64, TokenType::F32,
+        TokenType::F64,  TokenType::Bool, TokenType::Char};
     return typeKeywords.count(Peek().m_type) > 0;
 }
 
