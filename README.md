@@ -88,9 +88,9 @@ fn main() -> i32 {
 
 ## Syntax Design Decisions
 
-Jlang's syntax is designed to be clean, explicit, and familiar to developers coming from C, Go, or Rust. Here are the key design decisions:
+<h6><i>Jlang's syntax is designed to be clean, explicit, and familiar to developers coming from C, Go, or Rust.</i></h6>
 
-### Functions: `fn` keyword with trailing return type
+#### Functions: `fn` keyword with trailing return type
 
 ```rust
 fn add(a: i32, b: i32) -> i32 {
@@ -98,18 +98,18 @@ fn add(a: i32, b: i32) -> i32 {
 }
 ```
 
-The `fn` keyword is concise and widely recognized. Trailing return types (using `->`) improve readability, especially for longer parameter lists.
+<h6><i>The `fn` keyword is concise and widely recognized. Trailing return types (using `->`) improve readability, especially for longer parameter lists.</i></h6>
 
-### Variables: `var` with colon-separated types
+#### Variables: `var` with colon-separated types
 
 ```rust
 var name: char* = "Jlang";
 var count: i32 = 42;
 ```
 
-The colon syntax (`name: Type`) clearly separates identifiers from types and is consistent with modern languages like TypeScript, Kotlin, and Rust.
+<h6><i>The colon syntax (`name: Type`) clearly separates identifiers from types and is consistent with modern languages like TypeScript, Kotlin, and Rust.</i></h6>
 
-### Structs: colon for interface implementation
+#### Structs: colon for interface implementation
 
 ```rust
 struct Person : IPrintable {
@@ -118,9 +118,9 @@ struct Person : IPrintable {
 }
 ```
 
-Using `:` for interface implementation follows C++/C# conventions and avoids overloading the `->` operator which is commonly associated with pointer dereferencing.
+<h6><i>Using `:` for interface implementation follows C++/C# conventions and avoids overloading the `->` operator which is commonly associated with pointer dereferencing.</i></h6>
 
-### Methods: explicit `self` parameter
+#### Methods: explicit `self` parameter
 
 ```rust
 fn print(self: Person*) {
@@ -128,19 +128,19 @@ fn print(self: Person*) {
 }
 ```
 
-Explicit `self` makes the receiver clear and visible. There's no hidden magic - you can see exactly what the method operates on. This approach is similar to Python and Rust.
+<h6><i>Explicit `self` makes the receiver clear and visible. There's no hidden magic - you can see exactly what the method operates on. This approach is similar to Python and Rust.</i></h6>
 
-### Semicolons: required
+#### Semicolons: required
 
-All statements must end with a semicolon. This makes parsing unambiguous and aligns with C-family languages.
+<h6><i>All statements must end with a semicolon. This makes parsing unambiguous and aligns with C-family languages.</i></h6>
 
-### Null: lowercase `null`
+#### Null: lowercase `null`
 
 ```rust
 if (p == null) { ... }
 ```
 
-Using lowercase `null` is consistent with most modern languages (Java, C#, JavaScript) and feels more natural than the C macro `NULL`.
+<h6><i>Using lowercase `null` is consistent with most modern languages (Java, C#, JavaScript) and feels more natural than the C macro `NULL`.</i></h6>
 
 > [!TIP]
 > Always check if `alloc<T>()` returns `null` before using the pointer.
@@ -153,12 +153,12 @@ var p: Person* = alloc<Person>();
 free(p);
 ```
 
-Jlang uses explicit manual memory management with `alloc<T>()` and `free()`. This gives developers full control over memory and keeps the language simple without requiring a garbage collector or complex ownership system.
+<h6><i>Jlang uses explicit manual memory management with `alloc<T>()` and `free()`. This gives developers full control over memory and keeps the language simple without requiring a garbage collector or complex ownership system.</i></h6>
 
 > [!IMPORTANT]
 > You are responsible for freeing all allocated memory. Forgetting to call `free()` will cause memory leaks.
 
-### Primitive types
+#### Primitive types
 
 | Type | Description |
 |------|-------------|
@@ -168,4 +168,4 @@ Jlang uses explicit manual memory management with `alloc<T>()` and `free()`. Thi
 | `char` | Character |
 | `bool` | Boolean |
 
-Explicit bit-width types make memory layout predictable and clear.
+<h6><i>Explicit bit-width types make memory layout predictable and clear.</i></h6>
