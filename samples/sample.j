@@ -1,44 +1,36 @@
-interface IPrintable
-{
-    void print();
+interface IPrintable {
+    fn print();
 }
 
-struct Person -> IPrintable 
-{
-    firstName char*; 
-    age int32; 
+struct Person : IPrintable {
+    firstName: char*;
+    age: i32;
 }
 
-void print() -> Person p
-{
-    jout("First name: %s", p.firstName); 
-    jout("Age: %d", p.age); 
+fn print(self: Person*) {
+    jout("First name: %s", self.firstName);
+    jout("Age: %d", self.age);
 }
 
-struct Frog -> IPrintable 
-{
-    name char*; 
-    age int32; 
+struct Frog : IPrintable {
+    name: char*;
+    age: i32;
 }
 
-void print() -> Frog f
-{
-    jout("Frogs name: %s", f.name); 
-    jout("Age: %d", f.age); 
+fn print(self: Frog*) {
+    jout("Frogs name: %s", self.name);
+    jout("Age: %d", self.age);
 }
 
-int32 main()
-{
-    var person Person* = (struct Person*) jalloc(sizeof(struct Person));
+fn main() -> i32 {
+    var person: Person* = alloc<Person>();
 
-    if (person == NULL) 
-    {
-        jout("No can do"); 
-    }
-    else 
-    {
+    if (person == null) {
+        jout("No can do");
+    } else {
         jout("Incredible");
     }
 
-    jfree(person);
+    free(person);
+    return 0;
 }

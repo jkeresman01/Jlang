@@ -38,4 +38,13 @@ struct ExprStatement : public Statement
     void Accept(AstVisitor &visitor) override { visitor.VisitExprStatement(*this); }
 };
 
+struct ReturnStatement : public Statement
+{
+    std::shared_ptr<AstNode> value;
+
+    ReturnStatement() { type = NodeType::ReturnStatement; }
+
+    void Accept(AstVisitor &visitor) override { visitor.VisitReturnStatement(*this); }
+};
+
 } // namespace jlang

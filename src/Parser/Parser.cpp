@@ -70,7 +70,6 @@ bool Parser::IsEndReached() const
     return Peek().m_type == TokenType::EndOfFile;
 }
 
-// Everything is kinda hardcoded for now!! -> will change that later on, just trying to get stuff rolling..
 std::shared_ptr<AstNode> Parser::ParseDeclaration()
 {
     if (Check(TokenType::Interface))
@@ -83,7 +82,7 @@ std::shared_ptr<AstNode> Parser::ParseDeclaration()
         return ParseStruct();
     }
 
-    if (Check(TokenType::Void) || Check(TokenType::Int32))
+    if (Check(TokenType::Fn))
     {
         return ParseFunction();
     }
@@ -114,9 +113,9 @@ std::shared_ptr<AstNode> Parser::ParseInterface()
 
     while (!Check(TokenType::RBrace) && !IsEndReached())
     {
-        if (!IsMatched(TokenType::Void))
+        if (!IsMatched(TokenType::Fn))
         {
-            JLANG_ERROR("Expected 'void' in interface method");
+            JLANG_ERROR("Expected 'fn' in interface method");
             Advance(); // error recovery
             continue;
         }
@@ -156,7 +155,7 @@ std::shared_ptr<AstNode> Parser::ParseInterface()
 
 std::shared_ptr<AstNode> Parser::ParseStruct()
 {
-    Advance();
+    Advance(); // consume 'struct'
 
     if (!IsMatched(TokenType::Identifier))
     {
@@ -167,11 +166,12 @@ std::shared_ptr<AstNode> Parser::ParseStruct()
 
     std::string implementedInterface;
 
-    if (IsMatched(TokenType::Arrow))
+    // Use colon for interface implementation: struct Name : Interface
+    if (IsMatched(TokenType::Colon))
     {
         if (!IsMatched(TokenType::Identifier))
         {
-            JLANG_ERROR("Expected interface name after '->'");
+            JLANG_ERROR("Expected interface name after ':'");
         }
 
         implementedInterface = Previous().m_lexeme;
@@ -186,6 +186,7 @@ std::shared_ptr<AstNode> Parser::ParseStruct()
     structDeclNode->name = name;
     structDeclNode->interfaceImplemented = implementedInterface;
 
+    // Parse fields: fieldName: Type;
     while (!Check(TokenType::RBrace) && !IsEndReached())
     {
         if (!IsMatched(TokenType::Identifier))
@@ -202,20 +203,10 @@ std::shared_ptr<AstNode> Parser::ParseStruct()
 
         std::string fieldName = Previous().m_lexeme;
 
-        // Field type can be an identifier or a type keyword
-        std::string typeName;
-        if (IsMatched(TokenType::Identifier))
+        // Expect colon after field name
+        if (!IsMatched(TokenType::Colon))
         {
-            typeName = Previous().m_lexeme;
-        }
-        else if (IsMatched(TokenType::Int32))
-        {
-            typeName = "int32";
-        }
-        else
-        {
-            JLANG_ERROR("Expected field type");
-            // Skip to next semicolon or brace
+            JLANG_ERROR("Expected ':' after field name");
             while (!IsEndReached() && !Check(TokenType::Semicolon) && !Check(TokenType::RBrace))
             {
                 Advance();
@@ -224,12 +215,20 @@ std::shared_ptr<AstNode> Parser::ParseStruct()
             continue;
         }
 
-        bool isPointer = false;
-
-        if (IsMatched(TokenType::Star))
+        // Parse field type
+        std::string typeName = ParseTypeName();
+        if (typeName.empty())
         {
-            isPointer = true;
+            JLANG_ERROR("Expected field type");
+            while (!IsEndReached() && !Check(TokenType::Semicolon) && !Check(TokenType::RBrace))
+            {
+                Advance();
+            }
+            IsMatched(TokenType::Semicolon);
+            continue;
         }
+
+        bool isPointer = IsMatched(TokenType::Star);
 
         if (!IsMatched(TokenType::Semicolon))
         {
@@ -250,9 +249,7 @@ std::shared_ptr<AstNode> Parser::ParseStruct()
 
 std::shared_ptr<AstNode> Parser::ParseFunction()
 {
-    Advance();
-
-    TokenType returnTokenType = Previous().m_type;
+    Advance(); // consume 'fn'
 
     if (!IsMatched(TokenType::Identifier))
     {
@@ -261,43 +258,62 @@ std::shared_ptr<AstNode> Parser::ParseFunction()
 
     const std::string &functionName = Previous().m_lexeme;
 
-    // Hardcoded for no arguments, currently ..... will change that
-    if (!IsMatched(TokenType::LParen) || !IsMatched(TokenType::RParen))
+    // Parse parameter list: (name: Type, name: Type, ...)
+    if (!IsMatched(TokenType::LParen))
     {
-        JLANG_ERROR("Expected () after function name");
-    }
-
-    TypeRef returnType;
-
-    if (returnTokenType == TokenType::Void)
-    {
-        returnType = TypeRef{"void", false};
-    }
-    else
-    {
-        returnType = TypeRef{Previous().m_lexeme, false};
+        JLANG_ERROR("Expected '(' after function name");
     }
 
     std::vector<Parameter> params;
 
+    if (!Check(TokenType::RParen))
+    {
+        do
+        {
+            if (!IsMatched(TokenType::Identifier))
+            {
+                JLANG_ERROR("Expected parameter name");
+                break;
+            }
+            std::string paramName = Previous().m_lexeme;
+
+            if (!IsMatched(TokenType::Colon))
+            {
+                JLANG_ERROR("Expected ':' after parameter name");
+                break;
+            }
+
+            std::string typeName = ParseTypeName();
+            if (typeName.empty())
+            {
+                JLANG_ERROR("Expected parameter type");
+                break;
+            }
+
+            bool isPointer = IsMatched(TokenType::Star);
+
+            params.push_back(Parameter{paramName, TypeRef{typeName, isPointer}});
+
+        } while (IsMatched(TokenType::Comma));
+    }
+
+    if (!IsMatched(TokenType::RParen))
+    {
+        JLANG_ERROR("Expected ')' after parameters");
+    }
+
+    // Parse return type (optional, after ->), default to void
+    TypeRef returnType{"void", false};
+
     if (IsMatched(TokenType::Arrow))
     {
-        if (!IsMatched(TokenType::Identifier))
+        std::string returnTypeName = ParseTypeName();
+        if (returnTypeName.empty())
         {
-            JLANG_ERROR("Expected parameter type identifier '->' ");
+            JLANG_ERROR("Expected return type after '->'");
         }
-
-        const std::string &paramType = Previous().m_lexeme;
         bool isPointer = IsMatched(TokenType::Star);
-
-        if (!IsMatched(TokenType::Identifier))
-        {
-            JLANG_ERROR("Expected parameter name!");
-        }
-
-        const std::string &paramName = Previous().m_lexeme;
-
-        params.push_back(Parameter{paramName, TypeRef{paramType, isPointer}});
+        returnType = TypeRef{returnTypeName, isPointer};
     }
 
     auto body = ParseBlock();
@@ -350,12 +366,40 @@ std::shared_ptr<AstNode> Parser::ParseStatement()
         return ParseVarDecl();
     }
 
+    if (Check(TokenType::Return))
+    {
+        return ParseReturnStatement();
+    }
+
     if (Check(TokenType::LBrace))
     {
         return ParseBlock();
     }
 
     return ParseExprStatement();
+}
+
+std::shared_ptr<AstNode> Parser::ParseReturnStatement()
+{
+    Advance(); // consume 'return'
+
+    std::shared_ptr<AstNode> value = nullptr;
+
+    // Check if there's a return value (not just "return;")
+    if (!Check(TokenType::Semicolon))
+    {
+        value = ParseExpression();
+    }
+
+    if (!IsMatched(TokenType::Semicolon))
+    {
+        JLANG_ERROR("Expected ';' after return statement");
+    }
+
+    auto returnStmt = std::make_shared<ReturnStatement>();
+    returnStmt->value = value;
+
+    return returnStmt;
 }
 
 std::shared_ptr<AstNode> Parser::ParseVarDecl()
@@ -371,24 +415,18 @@ std::shared_ptr<AstNode> Parser::ParseVarDecl()
 
     std::string varName = Previous().m_lexeme;
 
-    // Type can be an identifier or a type keyword like int32, void, etc.
-    std::string typeName;
-    if (IsMatched(TokenType::Identifier))
+    // Expect colon after variable name: var name: Type
+    if (!IsMatched(TokenType::Colon))
     {
-        typeName = Previous().m_lexeme;
+        JLANG_ERROR("Expected ':' after variable name");
+        return nullptr;
     }
-    else if (IsMatched(TokenType::Int32))
-    {
-        typeName = "int32";
-    }
-    else if (IsMatched(TokenType::Void))
-    {
-        typeName = "void";
-    }
-    else
+
+    // Parse type
+    std::string typeName = ParseTypeName();
+    if (typeName.empty())
     {
         JLANG_ERROR("Expected variable type");
-        Advance(); // error recovery
         return nullptr;
     }
 
@@ -500,6 +538,48 @@ std::shared_ptr<AstNode> Parser::ParseExprStatement()
 
 std::shared_ptr<AstNode> Parser::ParsePrimary()
 {
+    // Handle null literal (keyword)
+    if (IsMatched(TokenType::Null))
+    {
+        auto literal = std::make_shared<LiteralExpr>();
+        literal->value = "null";
+        return literal;
+    }
+
+    // Handle alloc<Type>() expression
+    if (IsMatched(TokenType::Alloc))
+    {
+        if (!IsMatched(TokenType::Less))
+        {
+            JLANG_ERROR("Expected '<' after alloc");
+            return nullptr;
+        }
+
+        if (!IsMatched(TokenType::Identifier))
+        {
+            JLANG_ERROR("Expected type name in alloc<Type>");
+            return nullptr;
+        }
+
+        std::string typeName = Previous().m_lexeme;
+
+        if (!IsMatched(TokenType::Greater))
+        {
+            JLANG_ERROR("Expected '>' after type in alloc<Type>");
+            return nullptr;
+        }
+
+        if (!IsMatched(TokenType::LParen) || !IsMatched(TokenType::RParen))
+        {
+            JLANG_ERROR("Expected '()' after alloc<Type>");
+            return nullptr;
+        }
+
+        auto allocExpr = std::make_shared<AllocExpr>();
+        allocExpr->allocType = TypeRef{typeName, true}; // always returns a pointer
+        return allocExpr;
+    }
+
     // Handle cast expressions: (struct Type*) expr or (Type*) expr
     if (IsMatched(TokenType::LParen))
     {
@@ -541,46 +621,6 @@ std::shared_ptr<AstNode> Parser::ParsePrimary()
             }
             return expr;
         }
-    }
-
-    // Handle NULL literal
-    if (Check(TokenType::Identifier) && Peek().m_lexeme == "NULL")
-    {
-        Advance();
-        auto literal = std::make_shared<LiteralExpr>();
-        literal->value = "NULL";
-        return literal;
-    }
-
-    // Handle sizeof(type)
-    if (Check(TokenType::Identifier) && Peek().m_lexeme == "sizeof")
-    {
-        Advance();
-
-        if (!IsMatched(TokenType::LParen))
-        {
-            JLANG_ERROR("Expected '(' after sizeof");
-            return nullptr;
-        }
-
-        IsMatched(TokenType::Struct); // optional struct keyword
-
-        if (!IsMatched(TokenType::Identifier))
-        {
-            JLANG_ERROR("Expected type name in sizeof");
-            return nullptr;
-        }
-
-        if (!IsMatched(TokenType::RParen))
-        {
-            JLANG_ERROR("Expected ')' after sizeof type");
-            return nullptr;
-        }
-
-        // For now, return a literal with the sizeof value (simplified)
-        auto literal = std::make_shared<LiteralExpr>();
-        literal->value = "8"; // Default size, would need proper type system
-        return literal;
     }
 
     // Handle identifiers, function calls, and member access
@@ -646,6 +686,31 @@ std::shared_ptr<AstNode> Parser::ParsePrimary()
 
     JLANG_ERROR("Expected expression");
     return nullptr;
+}
+
+bool Parser::IsTypeKeyword() const
+{
+    TokenType t = Peek().m_type;
+    return t == TokenType::Void || t == TokenType::I8 || t == TokenType::I16 || t == TokenType::I32 ||
+           t == TokenType::I64 || t == TokenType::U8 || t == TokenType::U16 || t == TokenType::U32 ||
+           t == TokenType::U64 || t == TokenType::F32 || t == TokenType::F64 || t == TokenType::Bool ||
+           t == TokenType::Char;
+}
+
+std::string Parser::ParseTypeName()
+{
+    if (IsTypeKeyword())
+    {
+        std::string name = Peek().m_lexeme;
+        Advance();
+        return name;
+    }
+    else if (IsMatched(TokenType::Identifier))
+    {
+        return Previous().m_lexeme;
+    }
+
+    return "";
 }
 
 } // namespace jlang

@@ -12,11 +12,13 @@ enum class NodeType
     IfStatement,
     BlockStatement,
     ExprStatement,
+    ReturnStatement,
 
     CallExpr,
     BinaryExpr,
     VarExpr,
     LiteralExpr,
-    CastExpr
+    CastExpr,
+    AllocExpr
 };
 } // namespace jlang

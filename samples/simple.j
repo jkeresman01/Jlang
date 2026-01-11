@@ -1,4 +1,4 @@
-int32 main()
-{
-    var x int32 = 42;
+fn main() -> i32 {
+    var x: i32 = 42;
+    return 0;
 }

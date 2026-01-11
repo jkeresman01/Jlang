@@ -7,9 +7,34 @@ namespace jlang
 {
 
 static std::unordered_map<std::string, TokenType> s_Keywords = {
-    {"interface", TokenType::Interface}, {"struct", TokenType::Struct}, {"void", TokenType::Void},
-    {"int32", TokenType::Int32},         {"var", TokenType::Var},       {"if", TokenType::If},
-    {"else", TokenType::Else},           {"return", TokenType::Return}};
+    // Control flow
+    {"if", TokenType::If},
+    {"else", TokenType::Else},
+    {"return", TokenType::Return},
+    // Declarations
+    {"fn", TokenType::Fn},
+    {"var", TokenType::Var},
+    {"struct", TokenType::Struct},
+    {"interface", TokenType::Interface},
+    // Types
+    {"void", TokenType::Void},
+    {"i8", TokenType::I8},
+    {"i16", TokenType::I16},
+    {"i32", TokenType::I32},
+    {"i64", TokenType::I64},
+    {"u8", TokenType::U8},
+    {"u16", TokenType::U16},
+    {"u32", TokenType::U32},
+    {"u64", TokenType::U64},
+    {"f32", TokenType::F32},
+    {"f64", TokenType::F64},
+    {"bool", TokenType::Bool},
+    {"char", TokenType::Char},
+    // Literals
+    {"null", TokenType::Null},
+    // Memory
+    {"alloc", TokenType::Alloc},
+};
 
 Lexer::Lexer(const std::string &source) : m_Source(source) {}
 
@@ -50,6 +75,9 @@ void Lexer::ScanToken()
         break;
     case ';':
         AddToken(TokenType::Semicolon);
+        break;
+    case ':':
+        AddToken(TokenType::Colon);
         break;
     case ',':
         AddToken(TokenType::Comma);
@@ -208,13 +236,8 @@ void Lexer::AddStringLiteral()
 
 TokenType Lexer::IsKeywordOrIdentifier(const std::string &text)
 {
-    static const std::unordered_map<std::string, TokenType> keywords = {
-        {"interface", TokenType::Interface}, {"struct", TokenType::Struct}, {"void", TokenType::Void},
-        {"int32", TokenType::Int32},         {"var", TokenType::Var},       {"if", TokenType::If},
-        {"else", TokenType::Else},           {"return", TokenType::Return}};
-
-    auto it = keywords.find(text);
-    return it != keywords.end() ? it->second : TokenType::Identifier;
+    auto it = s_Keywords.find(text);
+    return it != s_Keywords.end() ? it->second : TokenType::Identifier;
 }
 
 } // namespace jlang

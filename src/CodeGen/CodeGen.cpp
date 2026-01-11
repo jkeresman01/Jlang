@@ -37,7 +37,7 @@ void CodeGenerator::Generate(const std::vector<std::shared_ptr<AstNode>> &progra
 void CodeGenerator::DeclareExternalFunctions()
 {
     // Declare printf: int printf(const char*, ...)
-    llvm::Type *ptrType = llvm::PointerType::getUnqual(m_Context);
+    llvm::Type *ptrType = llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(m_Context));
     llvm::FunctionType *printfType =
         llvm::FunctionType::get(llvm::Type::getInt32Ty(m_Context), {ptrType}, true);
     llvm::Function::Create(printfType, llvm::Function::ExternalLinkage, "printf", m_Module.get());
@@ -190,6 +190,19 @@ void CodeGenerator::VisitExprStatement(ExprStatement &node)
     }
 }
 
+void CodeGenerator::VisitReturnStatement(ReturnStatement &node)
+{
+    if (node.value)
+    {
+        node.value->Accept(*this);
+        m_IRBuilder.CreateRet(m_LastValue);
+    }
+    else
+    {
+        m_IRBuilder.CreateRetVoid();
+    }
+}
+
 void CodeGenerator::VisitCallExpr(CallExpr &node)
 {
     llvm::Function *callee = m_Module->getFunction(node.callee);
@@ -293,7 +306,8 @@ void CodeGenerator::VisitLiteralExpr(LiteralExpr &node)
 {
     if (node.value == "NULL" || node.value == "null" || node.value == "nullptr")
     {
-        m_LastValue = llvm::ConstantPointerNull::get(llvm::PointerType::getUnqual(m_Context));
+        m_LastValue =
+            llvm::ConstantPointerNull::get(llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(m_Context)));
     }
     else if (node.value.front() == '"' && node.value.back() == '"')
     {
@@ -365,25 +379,95 @@ void CodeGenerator::VisitCastExpr(CastExpr &node)
     }
 }
 
+void CodeGenerator::VisitAllocExpr(AllocExpr &node)
+{
+    // Get malloc function
+    llvm::Function *mallocFunc = m_Module->getFunction("malloc");
+    if (!mallocFunc)
+    {
+        JLANG_ERROR("malloc not declared");
+        return;
+    }
+
+    // Calculate size - for now, use 8 bytes as default struct size
+    // TODO: Implement proper struct size calculation based on registered struct types
+    llvm::Value *size = llvm::ConstantInt::get(llvm::Type::getInt64Ty(m_Context), 8);
+
+    // Call malloc
+    llvm::Value *allocated = m_IRBuilder.CreateCall(mallocFunc, {size}, "alloc");
+
+    // The result is already a pointer, store it directly
+    m_LastValue = allocated;
+}
+
 llvm::Type *CodeGenerator::MapType(const TypeRef &typeRef)
 {
+    llvm::Type *baseType = nullptr;
+
     if (typeRef.name == "void")
     {
         return llvm::Type::getVoidTy(m_Context);
     }
-
-    if (typeRef.name == "int32")
+    else if (typeRef.name == "i8")
     {
-        return llvm::Type::getInt32Ty(m_Context);
+        baseType = llvm::Type::getInt8Ty(m_Context);
+    }
+    else if (typeRef.name == "i16")
+    {
+        baseType = llvm::Type::getInt16Ty(m_Context);
+    }
+    else if (typeRef.name == "i32" || typeRef.name == "int32")
+    {
+        baseType = llvm::Type::getInt32Ty(m_Context);
+    }
+    else if (typeRef.name == "i64")
+    {
+        baseType = llvm::Type::getInt64Ty(m_Context);
+    }
+    else if (typeRef.name == "u8")
+    {
+        baseType = llvm::Type::getInt8Ty(m_Context);
+    }
+    else if (typeRef.name == "u16")
+    {
+        baseType = llvm::Type::getInt16Ty(m_Context);
+    }
+    else if (typeRef.name == "u32")
+    {
+        baseType = llvm::Type::getInt32Ty(m_Context);
+    }
+    else if (typeRef.name == "u64")
+    {
+        baseType = llvm::Type::getInt64Ty(m_Context);
+    }
+    else if (typeRef.name == "f32")
+    {
+        baseType = llvm::Type::getFloatTy(m_Context);
+    }
+    else if (typeRef.name == "f64")
+    {
+        baseType = llvm::Type::getDoubleTy(m_Context);
+    }
+    else if (typeRef.name == "bool")
+    {
+        baseType = llvm::Type::getInt1Ty(m_Context);
+    }
+    else if (typeRef.name == "char")
+    {
+        baseType = llvm::Type::getInt8Ty(m_Context);
+    }
+    else
+    {
+        // User-defined type (struct) - use opaque pointer for now
+        baseType = llvm::Type::getInt8Ty(m_Context);
     }
 
-    if (typeRef.name == "char")
+    if (typeRef.isPointer)
     {
-        llvm::Type *charType = llvm::Type::getInt8Ty(m_Context);
-        return typeRef.isPointer ? llvm::PointerType::getUnqual(charType) : charType;
+        return llvm::PointerType::getUnqual(baseType);
     }
 
-    return llvm::Type::getVoidTy(m_Context);
+    return baseType;
 }
 
 } // namespace jlang

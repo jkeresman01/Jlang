@@ -59,4 +59,13 @@ struct CastExpr : public Expression
     void Accept(AstVisitor &visitor) override { visitor.VisitCastExpr(*this); }
 };
 
+struct AllocExpr : public Expression
+{
+    TypeRef allocType;
+
+    AllocExpr() { type = NodeType::AllocExpr; }
+
+    void Accept(AstVisitor &visitor) override { visitor.VisitAllocExpr(*this); }
+};
+
 } // namespace jlang
