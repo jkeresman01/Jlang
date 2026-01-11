@@ -37,24 +37,25 @@ void CodeGenerator::Generate(const std::vector<std::shared_ptr<AstNode>> &progra
 void CodeGenerator::DeclareExternalFunctions()
 {
     // Declare printf: int printf(const char*, ...)
-    llvm::FunctionType *printfType = llvm::FunctionType::get(llvm::Type::getInt32Ty(m_Context),
-                                                             {llvm::Type::getInt8PtrTy(m_Context)}, true);
+    llvm::Type *ptrType = llvm::PointerType::getUnqual(m_Context);
+    llvm::FunctionType *printfType =
+        llvm::FunctionType::get(llvm::Type::getInt32Ty(m_Context), {ptrType}, true);
     llvm::Function::Create(printfType, llvm::Function::ExternalLinkage, "printf", m_Module.get());
 
     // Declare jout as alias to printf: int jout(const char*, ...)
     llvm::Function::Create(printfType, llvm::Function::ExternalLinkage, "jout", m_Module.get());
 
     // Declare malloc: void* malloc(size_t)
-    llvm::FunctionType *mallocType = llvm::FunctionType::get(llvm::Type::getInt8PtrTy(m_Context),
-                                                             {llvm::Type::getInt64Ty(m_Context)}, false);
+    llvm::FunctionType *mallocType =
+        llvm::FunctionType::get(ptrType, {llvm::Type::getInt64Ty(m_Context)}, false);
     llvm::Function::Create(mallocType, llvm::Function::ExternalLinkage, "malloc", m_Module.get());
 
     // Declare jalloc as alias to malloc
     llvm::Function::Create(mallocType, llvm::Function::ExternalLinkage, "jalloc", m_Module.get());
 
     // Declare free: void free(void*)
-    llvm::FunctionType *freeType = llvm::FunctionType::get(llvm::Type::getVoidTy(m_Context),
-                                                           {llvm::Type::getInt8PtrTy(m_Context)}, false);
+    llvm::FunctionType *freeType =
+        llvm::FunctionType::get(llvm::Type::getVoidTy(m_Context), {ptrType}, false);
     llvm::Function::Create(freeType, llvm::Function::ExternalLinkage, "free", m_Module.get());
 
     // Declare jfree as alias to free
@@ -158,7 +159,7 @@ void CodeGenerator::VisitIfStatement(IfStatement &node)
     node.thenBranch->Accept(*this);
     m_IRBuilder.CreateBr(mergeBlock);
 
-    parentFunction->getBasicBlockList().push_back(elseBlock);
+    elseBlock->insertInto(parentFunction);
     m_IRBuilder.SetInsertPoint(elseBlock);
     if (node.elseBranch)
     {
@@ -166,7 +167,7 @@ void CodeGenerator::VisitIfStatement(IfStatement &node)
     }
     m_IRBuilder.CreateBr(mergeBlock);
 
-    parentFunction->getBasicBlockList().push_back(mergeBlock);
+    mergeBlock->insertInto(parentFunction);
     m_IRBuilder.SetInsertPoint(mergeBlock);
 }
 
@@ -292,7 +293,7 @@ void CodeGenerator::VisitLiteralExpr(LiteralExpr &node)
 {
     if (node.value == "NULL" || node.value == "null" || node.value == "nullptr")
     {
-        m_LastValue = llvm::ConstantPointerNull::get(llvm::Type::getInt8PtrTy(m_Context));
+        m_LastValue = llvm::ConstantPointerNull::get(llvm::PointerType::getUnqual(m_Context));
     }
     else if (node.value.front() == '"' && node.value.back() == '"')
     {
