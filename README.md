@@ -69,6 +69,22 @@ var count: i32 = 42;
 
 <h6><i>The colon syntax (`name: Type`) clearly separates identifiers from types and is consistent with modern languages like TypeScript, Kotlin, and Rust.</i></h6>
 
+#### Control Flow: C-style if/else
+
+```rust
+if (x == 0) {
+    printf("x is zero");
+} else if (x == 10) {
+    printf("x is ten");
+} else {
+    printf("x is something else");
+}
+```
+
+<h6><i>Control flow uses standard C-style syntax with parentheses around conditions. The `else if` chain is achieved by following `else` with another `if` statement - there is no special `elseif` or `elif` keyword. Braces are optional for single statements but recommended for clarity.</i></h6>
+
+
+
 #### Structs: colon for interface implementation
 
 ```rust
@@ -129,20 +145,6 @@ free(p);
 | `bool` | Boolean |
 
 <h6><i>Explicit bit-width types make memory layout predictable and clear.</i></h6>
-
-#### Control Flow: C-style if/else
-
-```rust
-if (x == 0) {
-    printf("x is zero");
-} else if (x == 10) {
-    printf("x is ten");
-} else {
-    printf("x is something else");
-}
-```
-
-<h6><i>Control flow uses standard C-style syntax with parentheses around conditions. The `else if` chain is achieved by following `else` with another `if` statement - there is no special `elseif` or `elif` keyword. Braces are optional for single statements but recommended for clarity.</i></h6>
 
 ## Getting started
 
