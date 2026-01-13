@@ -122,6 +122,20 @@ TEST(LexerTest, TokenizesElseKeyword)
     EXPECT_EQ(tokens[0].m_lexeme, "else");
 }
 
+TEST(LexerTest, TokenizesWhileKeyword)
+{
+    // Given
+    Lexer lexer("while");
+
+    // When
+    std::vector<Token> tokens = lexer.Tokenize();
+
+    // Then
+    ASSERT_EQ(tokens.size(), 2);
+    EXPECT_EQ(tokens[0].m_type, TokenType::While);
+    EXPECT_EQ(tokens[0].m_lexeme, "while");
+}
+
 TEST(LexerTest, TokenizesReturnKeyword)
 {
     // Given
@@ -220,6 +234,35 @@ TEST(LexerTest, TokenizesNullKeyword)
     ASSERT_EQ(tokens.size(), 2);
     EXPECT_EQ(tokens[0].m_type, TokenType::Null);
     EXPECT_EQ(tokens[0].m_lexeme, "null");
+}
+
+// Boolean literals
+TEST(LexerTest, TokenizesTrueKeyword)
+{
+    // Given
+    Lexer lexer("true");
+
+    // When
+    std::vector<Token> tokens = lexer.Tokenize();
+
+    // Then
+    ASSERT_EQ(tokens.size(), 2);
+    EXPECT_EQ(tokens[0].m_type, TokenType::True);
+    EXPECT_EQ(tokens[0].m_lexeme, "true");
+}
+
+TEST(LexerTest, TokenizesFalseKeyword)
+{
+    // Given
+    Lexer lexer("false");
+
+    // When
+    std::vector<Token> tokens = lexer.Tokenize();
+
+    // Then
+    ASSERT_EQ(tokens.size(), 2);
+    EXPECT_EQ(tokens[0].m_type, TokenType::False);
+    EXPECT_EQ(tokens[0].m_lexeme, "false");
 }
 
 // Type keywords - signed integers
@@ -549,8 +592,8 @@ TEST(LexerTest, TokenizesArrow)
     EXPECT_EQ(tokens[0].m_lexeme, "->");
 }
 
-// Unknown tokens
-TEST(LexerTest, TokenizesSingleExclamationAsUnknown)
+// Logical operators
+TEST(LexerTest, TokenizesNotOperator)
 {
     // Given
     Lexer lexer("!");
@@ -560,8 +603,36 @@ TEST(LexerTest, TokenizesSingleExclamationAsUnknown)
 
     // Then
     ASSERT_EQ(tokens.size(), 2);
-    EXPECT_EQ(tokens[0].m_type, TokenType::Unknown);
+    EXPECT_EQ(tokens[0].m_type, TokenType::Not);
     EXPECT_EQ(tokens[0].m_lexeme, "!");
+}
+
+TEST(LexerTest, TokenizesAndOperator)
+{
+    // Given
+    Lexer lexer("&&");
+
+    // When
+    std::vector<Token> tokens = lexer.Tokenize();
+
+    // Then
+    ASSERT_EQ(tokens.size(), 2);
+    EXPECT_EQ(tokens[0].m_type, TokenType::And);
+    EXPECT_EQ(tokens[0].m_lexeme, "&&");
+}
+
+TEST(LexerTest, TokenizesOrOperator)
+{
+    // Given
+    Lexer lexer("||");
+
+    // When
+    std::vector<Token> tokens = lexer.Tokenize();
+
+    // Then
+    ASSERT_EQ(tokens.size(), 2);
+    EXPECT_EQ(tokens[0].m_type, TokenType::Or);
+    EXPECT_EQ(tokens[0].m_lexeme, "||");
 }
 
 TEST(LexerTest, TokenizesMinus)
@@ -995,4 +1066,72 @@ TEST(LexerTest, TokenizesAllTypeKeywordsTogether)
     EXPECT_EQ(tokens[11].m_type, TokenType::Char);
     EXPECT_EQ(tokens[12].m_type, TokenType::Void);
     EXPECT_EQ(tokens[13].m_type, TokenType::EndOfFile);
+}
+
+TEST(LexerTest, TokenizesBooleanExpression)
+{
+    // Given
+    std::string source = "true && false || !x";
+    Lexer lexer(source);
+
+    // When
+    std::vector<Token> tokens = lexer.Tokenize();
+
+    // Then
+    ASSERT_EQ(tokens.size(), 7);
+    EXPECT_EQ(tokens[0].m_type, TokenType::True);
+    EXPECT_EQ(tokens[1].m_type, TokenType::And);
+    EXPECT_EQ(tokens[2].m_type, TokenType::False);
+    EXPECT_EQ(tokens[3].m_type, TokenType::Or);
+    EXPECT_EQ(tokens[4].m_type, TokenType::Not);
+    EXPECT_EQ(tokens[5].m_type, TokenType::Identifier);
+    EXPECT_EQ(tokens[6].m_type, TokenType::EndOfFile);
+}
+
+TEST(LexerTest, TokenizesWhileLoop)
+{
+    // Given
+    std::string source = "while x < 10 { x = x + 1; }";
+    Lexer lexer(source);
+
+    // When
+    std::vector<Token> tokens = lexer.Tokenize();
+
+    // Then
+    ASSERT_EQ(tokens.size(), 13);
+    EXPECT_EQ(tokens[0].m_type, TokenType::While);
+    EXPECT_EQ(tokens[1].m_type, TokenType::Identifier);
+    EXPECT_EQ(tokens[2].m_type, TokenType::Less);
+    EXPECT_EQ(tokens[3].m_type, TokenType::NumberLiteral);
+    EXPECT_EQ(tokens[4].m_type, TokenType::LBrace);
+    EXPECT_EQ(tokens[5].m_type, TokenType::Identifier);
+    EXPECT_EQ(tokens[6].m_type, TokenType::Equal);
+    EXPECT_EQ(tokens[7].m_type, TokenType::Identifier);
+    EXPECT_EQ(tokens[8].m_type, TokenType::Plus);
+    EXPECT_EQ(tokens[9].m_type, TokenType::NumberLiteral);
+    EXPECT_EQ(tokens[10].m_type, TokenType::Semicolon);
+    EXPECT_EQ(tokens[11].m_type, TokenType::RBrace);
+    EXPECT_EQ(tokens[12].m_type, TokenType::EndOfFile);
+}
+
+TEST(LexerTest, TokenizesBooleanVariableDeclaration)
+{
+    // Given
+    std::string source = "var isActive: bool = true;";
+    Lexer lexer(source);
+
+    // When
+    std::vector<Token> tokens = lexer.Tokenize();
+
+    // Then
+    ASSERT_EQ(tokens.size(), 8);
+    EXPECT_EQ(tokens[0].m_type, TokenType::Var);
+    EXPECT_EQ(tokens[1].m_type, TokenType::Identifier);
+    EXPECT_EQ(tokens[1].m_lexeme, "isActive");
+    EXPECT_EQ(tokens[2].m_type, TokenType::Colon);
+    EXPECT_EQ(tokens[3].m_type, TokenType::Bool);
+    EXPECT_EQ(tokens[4].m_type, TokenType::Equal);
+    EXPECT_EQ(tokens[5].m_type, TokenType::True);
+    EXPECT_EQ(tokens[6].m_type, TokenType::Semicolon);
+    EXPECT_EQ(tokens[7].m_type, TokenType::EndOfFile);
 }
