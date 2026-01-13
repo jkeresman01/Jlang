@@ -10,6 +10,7 @@ static std::unordered_map<std::string, TokenType> s_Keywords = {
     // Control flow
     {"if", TokenType::If},
     {"else", TokenType::Else},
+    {"while", TokenType::While},
     {"return", TokenType::Return},
     // Declarations
     {"fn", TokenType::Fn},
@@ -88,6 +89,12 @@ void Lexer::ScanToken()
     case '*':
         AddToken(TokenType::Star);
         break;
+    case '+':
+        AddToken(TokenType::Plus);
+        break;
+    case '/':
+        AddToken(TokenType::Slash);
+        break;
     case '=':
         AddToken(IsMatched('=') ? TokenType::EqualEqual : TokenType::Equal);
         break;
@@ -107,7 +114,7 @@ void Lexer::ScanToken()
         }
         else
         {
-            AddToken(TokenType::Unknown);
+            AddToken(TokenType::Minus);
         }
         break;
     case '"':

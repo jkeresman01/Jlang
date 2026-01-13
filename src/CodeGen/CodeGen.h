@@ -35,6 +35,7 @@ class CodeGenerator : public AstVisitor
     virtual void VisitVariableDecl(VariableDecl &) override;
 
     virtual void VisitIfStatement(IfStatement &) override;
+    virtual void VisitWhileStatement(WhileStatement &) override;
     virtual void VisitBlockStatement(BlockStatement &) override;
     virtual void VisitExprStatement(ExprStatement &) override;
     virtual void VisitReturnStatement(ReturnStatement &) override;
@@ -45,6 +46,7 @@ class CodeGenerator : public AstVisitor
     virtual void VisitVarExpr(VarExpr &) override;
     virtual void VisitCastExpr(CastExpr &) override;
     virtual void VisitAllocExpr(AllocExpr &) override;
+    virtual void VisitAssignExpr(AssignExpr &) override;
 
   private:
     void DeclareExternalFunctions();

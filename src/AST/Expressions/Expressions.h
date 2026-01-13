@@ -68,4 +68,14 @@ struct AllocExpr : public Expression
     void Accept(AstVisitor &visitor) override { visitor.VisitAllocExpr(*this); }
 };
 
+struct AssignExpr : public Expression
+{
+    std::string name;
+    std::shared_ptr<AstNode> value;
+
+    AssignExpr() { type = NodeType::AssignExpr; }
+
+    void Accept(AstVisitor &visitor) override { visitor.VisitAssignExpr(*this); }
+};
+
 } // namespace jlang

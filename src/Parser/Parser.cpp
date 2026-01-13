@@ -363,6 +363,11 @@ std::shared_ptr<AstNode> Parser::ParseStatement()
         return ParseIfStatement();
     }
 
+    if (Check(TokenType::While))
+    {
+        return ParseWhileStatement();
+    }
+
     if (Check(TokenType::Var))
     {
         return ParseVarDecl();
@@ -487,16 +492,122 @@ std::shared_ptr<AstNode> Parser::ParseIfStatement()
     return node;
 }
 
+std::shared_ptr<AstNode> Parser::ParseWhileStatement()
+{
+    Advance(); // consume 'while'
+
+    if (!IsMatched(TokenType::LParen))
+    {
+        JLANG_ERROR("Expected '(' after 'while'");
+    }
+
+    auto condition = ParseExpression();
+
+    if (!IsMatched(TokenType::RParen))
+    {
+        JLANG_ERROR("Expected ')' after condition");
+    }
+
+    auto body = ParseStatement();
+
+    auto node = std::make_shared<WhileStatement>();
+    node->condition = condition;
+    node->body = body;
+
+    return node;
+}
+
 std::shared_ptr<AstNode> Parser::ParseExpression()
 {
-    return ParseEquality();
+    auto expr = ParseEquality();
+
+    // Handle assignment: identifier = expression
+    if (IsMatched(TokenType::Equal))
+    {
+        auto value = ParseExpression();
+
+        // Check if left side is a variable
+        if (auto varExpr = std::dynamic_pointer_cast<VarExpr>(expr))
+        {
+            auto assign = std::make_shared<AssignExpr>();
+            assign->name = varExpr->name;
+            assign->value = value;
+            return assign;
+        }
+        else
+        {
+            JLANG_ERROR("Invalid assignment target");
+        }
+    }
+
+    return expr;
 }
 
 std::shared_ptr<AstNode> Parser::ParseEquality()
 {
-    auto left = ParsePrimary();
+    auto left = ParseComparison();
 
     while (Check(TokenType::EqualEqual) || Check(TokenType::NotEqual))
+    {
+        std::string op = Peek().m_lexeme;
+        Advance();
+        auto right = ParseComparison();
+
+        auto binary = std::make_shared<BinaryExpr>();
+        binary->op = op;
+        binary->left = left;
+        binary->right = right;
+        left = binary;
+    }
+
+    return left;
+}
+
+std::shared_ptr<AstNode> Parser::ParseComparison()
+{
+    auto left = ParseAdditive();
+
+    while (Check(TokenType::Less) || Check(TokenType::Greater))
+    {
+        std::string op = Peek().m_lexeme;
+        Advance();
+        auto right = ParseAdditive();
+
+        auto binary = std::make_shared<BinaryExpr>();
+        binary->op = op;
+        binary->left = left;
+        binary->right = right;
+        left = binary;
+    }
+
+    return left;
+}
+
+std::shared_ptr<AstNode> Parser::ParseAdditive()
+{
+    auto left = ParseMultiplicative();
+
+    while (Check(TokenType::Plus) || Check(TokenType::Minus))
+    {
+        std::string op = Peek().m_lexeme;
+        Advance();
+        auto right = ParseMultiplicative();
+
+        auto binary = std::make_shared<BinaryExpr>();
+        binary->op = op;
+        binary->left = left;
+        binary->right = right;
+        left = binary;
+    }
+
+    return left;
+}
+
+std::shared_ptr<AstNode> Parser::ParseMultiplicative()
+{
+    auto left = ParsePrimary();
+
+    while (Check(TokenType::Star) || Check(TokenType::Slash))
     {
         std::string op = Peek().m_lexeme;
         Advance();

@@ -162,6 +162,48 @@ void CodeGenerator::VisitIfStatement(IfStatement &node)
     m_IRBuilder.SetInsertPoint(mergeBlock);
 }
 
+void CodeGenerator::VisitWhileStatement(WhileStatement &node)
+{
+    llvm::Function *parentFunction = m_IRBuilder.GetInsertBlock()->getParent();
+
+    llvm::BasicBlock *condBlock = llvm::BasicBlock::Create(m_Context, "while.cond", parentFunction);
+    llvm::BasicBlock *bodyBlock = llvm::BasicBlock::Create(m_Context, "while.body");
+    llvm::BasicBlock *exitBlock = llvm::BasicBlock::Create(m_Context, "while.exit");
+
+    // Branch to condition block
+    m_IRBuilder.CreateBr(condBlock);
+
+    // Condition block
+    m_IRBuilder.SetInsertPoint(condBlock);
+    node.condition->Accept(*this);
+    llvm::Value *condValue = m_LastValue;
+
+    if (!condValue)
+    {
+        JLANG_ERROR("Invalid condition in while statement");
+        return;
+    }
+
+    // Convert i32 to i1 if necessary
+    if (condValue->getType()->isIntegerTy(32))
+    {
+        condValue =
+            m_IRBuilder.CreateICmpNE(condValue, llvm::ConstantInt::get(condValue->getType(), 0), "whilecond");
+    }
+
+    m_IRBuilder.CreateCondBr(condValue, bodyBlock, exitBlock);
+
+    // Body block
+    bodyBlock->insertInto(parentFunction);
+    m_IRBuilder.SetInsertPoint(bodyBlock);
+    node.body->Accept(*this);
+    m_IRBuilder.CreateBr(condBlock);
+
+    // Exit block
+    exitBlock->insertInto(parentFunction);
+    m_IRBuilder.SetInsertPoint(exitBlock);
+}
+
 void CodeGenerator::VisitBlockStatement(BlockStatement &node)
 {
     for (auto &statement : node.statements)
@@ -389,6 +431,39 @@ void CodeGenerator::VisitAllocExpr(AllocExpr &node)
 
     // The result is already a pointer, store it directly
     m_LastValue = allocated;
+}
+
+void CodeGenerator::VisitAssignExpr(AssignExpr &node)
+{
+    // Evaluate the right-hand side
+    node.value->Accept(*this);
+    llvm::Value *valueToStore = m_LastValue;
+
+    if (!valueToStore)
+    {
+        JLANG_ERROR("Invalid value in assignment");
+        return;
+    }
+
+    // Find the variable
+    auto it = m_namedValues.find(node.name);
+    if (it == m_namedValues.end())
+    {
+        JLANG_ERROR(STR("Undefined variable in assignment: %s", node.name.c_str()));
+        return;
+    }
+
+    llvm::Value *var = it->second;
+
+    if (llvm::AllocaInst *alloca = llvm::dyn_cast<llvm::AllocaInst>(var))
+    {
+        m_IRBuilder.CreateStore(valueToStore, alloca);
+        m_LastValue = valueToStore;
+    }
+    else
+    {
+        JLANG_ERROR("Cannot assign to non-variable");
+    }
 }
 
 llvm::Type *CodeGenerator::MapType(const TypeRef &typeRef)

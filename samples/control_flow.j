@@ -38,5 +38,22 @@ fn main() -> i32 {
     else
         printf("single line else");
 
+    // While loops
+    var i: i32 = 0;
+
+    while (i < 5) {
+        printf("i = %d", i);
+        i = i + 1;
+    }
+
+    printf("Loop finished, i = %d", i);
+
+    var count: i32 = 3;
+    while (count > 0) {
+        printf("Countdown: %d", count);
+        count = count - 1;
+    }
+    printf("Liftoff!");
+
     return 0;
 }

@@ -69,7 +69,7 @@ var count: i32 = 42;
 
 <h6><i>The colon syntax (`name: Type`) clearly separates identifiers from types and is consistent with modern languages like TypeScript, Kotlin, and Rust.</i></h6>
 
-#### Control Flow: C-style if/else
+#### Control Flow: C-style if/else and while
 
 ```rust
 if (x == 0) {
@@ -82,6 +82,18 @@ if (x == 0) {
 ```
 
 <h6><i>Control flow uses standard C-style syntax with parentheses around conditions. The `else if` chain is achieved by following `else` with another `if` statement - there is no special `elseif` or `elif` keyword. Braces are optional for single statements but recommended for clarity.</i></h6>
+
+#### While loops
+
+```rust
+var i: i32 = 0;
+while (i < 10) {
+    printf("i = %d", i);
+    i = i + 1;
+}
+```
+
+<h6><i>The `while` loop uses C-style syntax: `while (condition) { body }`. The condition is evaluated before each iteration, and the loop continues as long as the condition is true. Braces are optional for single statements.</i></h6>
 
 
 

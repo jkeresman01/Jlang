@@ -10,6 +10,7 @@ enum class NodeType
     VariableDecl,
 
     IfStatement,
+    WhileStatement,
     BlockStatement,
     ExprStatement,
     ReturnStatement,
@@ -19,6 +20,7 @@ enum class NodeType
     VarExpr,
     LiteralExpr,
     CastExpr,
-    AllocExpr
+    AllocExpr,
+    AssignExpr
 };
 } // namespace jlang
