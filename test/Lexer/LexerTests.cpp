@@ -564,7 +564,7 @@ TEST(LexerTest, TokenizesSingleExclamationAsUnknown)
     EXPECT_EQ(tokens[0].m_lexeme, "!");
 }
 
-TEST(LexerTest, TokenizesSingleMinusAsUnknown)
+TEST(LexerTest, TokenizesMinus)
 {
     // Given
     Lexer lexer("-");
@@ -574,7 +574,7 @@ TEST(LexerTest, TokenizesSingleMinusAsUnknown)
 
     // Then
     ASSERT_EQ(tokens.size(), 2);
-    EXPECT_EQ(tokens[0].m_type, TokenType::Unknown);
+    EXPECT_EQ(tokens[0].m_type, TokenType::Minus);
     EXPECT_EQ(tokens[0].m_lexeme, "-");
 }
 

@@ -16,6 +16,10 @@
     "ptrne",
     "Unqual",
     "alloc",
-    "Structs"
+    "Structs",
+    "zstd",
+    "libzstd",
+    "libnames",
+    "whilecond"
   ]
 }
