@@ -7,8 +7,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(GTest REQUIRED)
 
 add_executable(run-tests
-    Lexer/LexerTests.cpp
-    ../src/Lexer/Lexer.cpp
+    Scanner/ScannerTests.cpp
+    ../src/Scanner/Scanner.cpp
 )
 
 target_include_directories(run-tests PRIVATE

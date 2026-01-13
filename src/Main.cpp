@@ -1,6 +1,6 @@
 #include "CodeGen/CodeGen.h"
-#include "Lexer/Lexer.h"
 #include "Parser/Parser.h"
+#include "Scanner/Scanner.h"
 
 #include <fstream>
 #include <iostream>
@@ -9,7 +9,7 @@
 using namespace jlang;
 
 // Forward declarations
-void TryLexer();
+void TryScanner();
 void TryParser();
 void TryCodeGen();
 
@@ -34,17 +34,17 @@ std::string Load(const std::string &path)
 
 void TryAllThis()
 {
-    TryLexer();
+    TryScanner();
     TryParser();
     TryCodeGen();
 }
 
-void TryLexer()
+void TryScanner()
 {
     std::string sourceCode = Load("../samples/simple.j");
 
-    Lexer lexer(sourceCode);
-    const std::vector<Token> &tokens = lexer.Tokenize();
+    Scanner scanner(sourceCode);
+    const std::vector<Token> &tokens = scanner.Tokenize();
 
     std::cout << "Tokens: \r\n";
 
@@ -58,8 +58,8 @@ void TryParser()
 {
     std::string sourceCode = Load("../samples/simple.j");
 
-    Lexer lexer(sourceCode);
-    const std::vector<Token> &tokens = lexer.Tokenize();
+    Scanner scanner(sourceCode);
+    const std::vector<Token> &tokens = scanner.Tokenize();
 
     Parser parser(tokens);
     std::vector<std::shared_ptr<AstNode>> program = parser.Parse();
@@ -71,8 +71,8 @@ void TryCodeGen()
 {
     std::string sourceCode = Load("../samples/simple.j");
 
-    Lexer lexer(sourceCode);
-    const std::vector<Token> &tokens = lexer.Tokenize();
+    Scanner scanner(sourceCode);
+    const std::vector<Token> &tokens = scanner.Tokenize();
 
     Parser parser(tokens);
     std::vector<std::shared_ptr<AstNode>> program = parser.Parse();

@@ -10,10 +10,10 @@
 namespace jlang
 {
 
-class Lexer
+class Scanner
 {
   public:
-    explicit Lexer(const std::string &source);
+    explicit Scanner(const std::string &source);
     std::vector<Token> Tokenize();
 
   private:

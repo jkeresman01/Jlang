@@ -1,29 +1,29 @@
 #include <gtest/gtest.h>
 
-#include "../../src/Lexer/Lexer.h"
+#include "../../src/Scanner/Scanner.h"
 
 using namespace jlang;
 
-TEST(LexerTest, TokenizesEmptySource)
+TEST(ScannerTest, TokenizesEmptySource)
 {
     // Given
-    Lexer lexer("");
+    Scanner scanner("");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 1);
     EXPECT_EQ(tokens[0].m_type, TokenType::EndOfFile);
 }
 
-TEST(LexerTest, TokenizesSimpleKeywords)
+TEST(ScannerTest, TokenizesSimpleKeywords)
 {
     // Given
-    Lexer lexer("void");
+    Scanner scanner("void");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_GE(tokens.size(), 2u);
@@ -31,13 +31,13 @@ TEST(LexerTest, TokenizesSimpleKeywords)
     EXPECT_EQ(tokens[tokens.size() - 1].m_type, TokenType::EndOfFile);
 }
 
-TEST(LexerTest, TokenizesBraces)
+TEST(ScannerTest, TokenizesBraces)
 {
     // Given
-    Lexer lexer("{}()");
+    Scanner scanner("{}()");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 5);
@@ -47,13 +47,13 @@ TEST(LexerTest, TokenizesBraces)
     EXPECT_EQ(tokens[3].m_type, TokenType::RParen);
 }
 
-TEST(LexerTest, TokenizesIdentifiers)
+TEST(ScannerTest, TokenizesIdentifiers)
 {
     // Given
-    Lexer lexer("myVar");
+    Scanner scanner("myVar");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_GE(tokens.size(), 2u);
@@ -61,13 +61,13 @@ TEST(LexerTest, TokenizesIdentifiers)
     EXPECT_EQ(tokens[0].m_lexeme, "myVar");
 }
 
-TEST(LexerTest, TokenizesNumbers)
+TEST(ScannerTest, TokenizesNumbers)
 {
     // Given
-    Lexer lexer("42 123 0");
+    Scanner scanner("42 123 0");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 4);
@@ -79,13 +79,13 @@ TEST(LexerTest, TokenizesNumbers)
     EXPECT_EQ(tokens[2].m_lexeme, "0");
 }
 
-TEST(LexerTest, TokenizesStringLiterals)
+TEST(ScannerTest, TokenizesStringLiterals)
 {
     // Given
-    Lexer lexer("\"hello world\"");
+    Scanner scanner("\"hello world\"");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 2);
@@ -94,13 +94,13 @@ TEST(LexerTest, TokenizesStringLiterals)
 }
 
 // Control flow keywords
-TEST(LexerTest, TokenizesIfKeyword)
+TEST(ScannerTest, TokenizesIfKeyword)
 {
     // Given
-    Lexer lexer("if");
+    Scanner scanner("if");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 2);
@@ -108,13 +108,13 @@ TEST(LexerTest, TokenizesIfKeyword)
     EXPECT_EQ(tokens[0].m_lexeme, "if");
 }
 
-TEST(LexerTest, TokenizesElseKeyword)
+TEST(ScannerTest, TokenizesElseKeyword)
 {
     // Given
-    Lexer lexer("else");
+    Scanner scanner("else");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 2);
@@ -122,13 +122,13 @@ TEST(LexerTest, TokenizesElseKeyword)
     EXPECT_EQ(tokens[0].m_lexeme, "else");
 }
 
-TEST(LexerTest, TokenizesWhileKeyword)
+TEST(ScannerTest, TokenizesWhileKeyword)
 {
     // Given
-    Lexer lexer("while");
+    Scanner scanner("while");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 2);
@@ -136,13 +136,13 @@ TEST(LexerTest, TokenizesWhileKeyword)
     EXPECT_EQ(tokens[0].m_lexeme, "while");
 }
 
-TEST(LexerTest, TokenizesReturnKeyword)
+TEST(ScannerTest, TokenizesReturnKeyword)
 {
     // Given
-    Lexer lexer("return");
+    Scanner scanner("return");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 2);
@@ -151,13 +151,13 @@ TEST(LexerTest, TokenizesReturnKeyword)
 }
 
 // Declaration keywords
-TEST(LexerTest, TokenizesFnKeyword)
+TEST(ScannerTest, TokenizesFnKeyword)
 {
     // Given
-    Lexer lexer("fn");
+    Scanner scanner("fn");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 2);
@@ -165,13 +165,13 @@ TEST(LexerTest, TokenizesFnKeyword)
     EXPECT_EQ(tokens[0].m_lexeme, "fn");
 }
 
-TEST(LexerTest, TokenizesVarKeyword)
+TEST(ScannerTest, TokenizesVarKeyword)
 {
     // Given
-    Lexer lexer("var");
+    Scanner scanner("var");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 2);
@@ -179,13 +179,13 @@ TEST(LexerTest, TokenizesVarKeyword)
     EXPECT_EQ(tokens[0].m_lexeme, "var");
 }
 
-TEST(LexerTest, TokenizesStructKeyword)
+TEST(ScannerTest, TokenizesStructKeyword)
 {
     // Given
-    Lexer lexer("struct");
+    Scanner scanner("struct");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 2);
@@ -193,13 +193,13 @@ TEST(LexerTest, TokenizesStructKeyword)
     EXPECT_EQ(tokens[0].m_lexeme, "struct");
 }
 
-TEST(LexerTest, TokenizesInterfaceKeyword)
+TEST(ScannerTest, TokenizesInterfaceKeyword)
 {
     // Given
-    Lexer lexer("interface");
+    Scanner scanner("interface");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 2);
@@ -208,13 +208,13 @@ TEST(LexerTest, TokenizesInterfaceKeyword)
 }
 
 // Memory and literal keywords
-TEST(LexerTest, TokenizesAllocKeyword)
+TEST(ScannerTest, TokenizesAllocKeyword)
 {
     // Given
-    Lexer lexer("alloc");
+    Scanner scanner("alloc");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 2);
@@ -222,13 +222,13 @@ TEST(LexerTest, TokenizesAllocKeyword)
     EXPECT_EQ(tokens[0].m_lexeme, "alloc");
 }
 
-TEST(LexerTest, TokenizesNullKeyword)
+TEST(ScannerTest, TokenizesNullKeyword)
 {
     // Given
-    Lexer lexer("null");
+    Scanner scanner("null");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 2);
@@ -237,13 +237,13 @@ TEST(LexerTest, TokenizesNullKeyword)
 }
 
 // Boolean literals
-TEST(LexerTest, TokenizesTrueKeyword)
+TEST(ScannerTest, TokenizesTrueKeyword)
 {
     // Given
-    Lexer lexer("true");
+    Scanner scanner("true");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 2);
@@ -251,13 +251,13 @@ TEST(LexerTest, TokenizesTrueKeyword)
     EXPECT_EQ(tokens[0].m_lexeme, "true");
 }
 
-TEST(LexerTest, TokenizesFalseKeyword)
+TEST(ScannerTest, TokenizesFalseKeyword)
 {
     // Given
-    Lexer lexer("false");
+    Scanner scanner("false");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 2);
@@ -266,13 +266,13 @@ TEST(LexerTest, TokenizesFalseKeyword)
 }
 
 // Type keywords - signed integers
-TEST(LexerTest, TokenizesI8Keyword)
+TEST(ScannerTest, TokenizesI8Keyword)
 {
     // Given
-    Lexer lexer("i8");
+    Scanner scanner("i8");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 2);
@@ -280,13 +280,13 @@ TEST(LexerTest, TokenizesI8Keyword)
     EXPECT_EQ(tokens[0].m_lexeme, "i8");
 }
 
-TEST(LexerTest, TokenizesI16Keyword)
+TEST(ScannerTest, TokenizesI16Keyword)
 {
     // Given
-    Lexer lexer("i16");
+    Scanner scanner("i16");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 2);
@@ -294,13 +294,13 @@ TEST(LexerTest, TokenizesI16Keyword)
     EXPECT_EQ(tokens[0].m_lexeme, "i16");
 }
 
-TEST(LexerTest, TokenizesI32Keyword)
+TEST(ScannerTest, TokenizesI32Keyword)
 {
     // Given
-    Lexer lexer("i32");
+    Scanner scanner("i32");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 2);
@@ -308,13 +308,13 @@ TEST(LexerTest, TokenizesI32Keyword)
     EXPECT_EQ(tokens[0].m_lexeme, "i32");
 }
 
-TEST(LexerTest, TokenizesI64Keyword)
+TEST(ScannerTest, TokenizesI64Keyword)
 {
     // Given
-    Lexer lexer("i64");
+    Scanner scanner("i64");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 2);
@@ -323,13 +323,13 @@ TEST(LexerTest, TokenizesI64Keyword)
 }
 
 // Type keywords - unsigned integers
-TEST(LexerTest, TokenizesU8Keyword)
+TEST(ScannerTest, TokenizesU8Keyword)
 {
     // Given
-    Lexer lexer("u8");
+    Scanner scanner("u8");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 2);
@@ -337,13 +337,13 @@ TEST(LexerTest, TokenizesU8Keyword)
     EXPECT_EQ(tokens[0].m_lexeme, "u8");
 }
 
-TEST(LexerTest, TokenizesU16Keyword)
+TEST(ScannerTest, TokenizesU16Keyword)
 {
     // Given
-    Lexer lexer("u16");
+    Scanner scanner("u16");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 2);
@@ -351,13 +351,13 @@ TEST(LexerTest, TokenizesU16Keyword)
     EXPECT_EQ(tokens[0].m_lexeme, "u16");
 }
 
-TEST(LexerTest, TokenizesU32Keyword)
+TEST(ScannerTest, TokenizesU32Keyword)
 {
     // Given
-    Lexer lexer("u32");
+    Scanner scanner("u32");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 2);
@@ -365,13 +365,13 @@ TEST(LexerTest, TokenizesU32Keyword)
     EXPECT_EQ(tokens[0].m_lexeme, "u32");
 }
 
-TEST(LexerTest, TokenizesU64Keyword)
+TEST(ScannerTest, TokenizesU64Keyword)
 {
     // Given
-    Lexer lexer("u64");
+    Scanner scanner("u64");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 2);
@@ -380,13 +380,13 @@ TEST(LexerTest, TokenizesU64Keyword)
 }
 
 // Type keywords - floating point
-TEST(LexerTest, TokenizesF32Keyword)
+TEST(ScannerTest, TokenizesF32Keyword)
 {
     // Given
-    Lexer lexer("f32");
+    Scanner scanner("f32");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 2);
@@ -394,13 +394,13 @@ TEST(LexerTest, TokenizesF32Keyword)
     EXPECT_EQ(tokens[0].m_lexeme, "f32");
 }
 
-TEST(LexerTest, TokenizesF64Keyword)
+TEST(ScannerTest, TokenizesF64Keyword)
 {
     // Given
-    Lexer lexer("f64");
+    Scanner scanner("f64");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 2);
@@ -409,13 +409,13 @@ TEST(LexerTest, TokenizesF64Keyword)
 }
 
 // Type keywords - bool and char
-TEST(LexerTest, TokenizesBoolKeyword)
+TEST(ScannerTest, TokenizesBoolKeyword)
 {
     // Given
-    Lexer lexer("bool");
+    Scanner scanner("bool");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 2);
@@ -423,13 +423,13 @@ TEST(LexerTest, TokenizesBoolKeyword)
     EXPECT_EQ(tokens[0].m_lexeme, "bool");
 }
 
-TEST(LexerTest, TokenizesCharKeyword)
+TEST(ScannerTest, TokenizesCharKeyword)
 {
     // Given
-    Lexer lexer("char");
+    Scanner scanner("char");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 2);
@@ -438,13 +438,13 @@ TEST(LexerTest, TokenizesCharKeyword)
 }
 
 // Operators and symbols
-TEST(LexerTest, TokenizesSemicolon)
+TEST(ScannerTest, TokenizesSemicolon)
 {
     // Given
-    Lexer lexer(";");
+    Scanner scanner(";");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 2);
@@ -452,13 +452,13 @@ TEST(LexerTest, TokenizesSemicolon)
     EXPECT_EQ(tokens[0].m_lexeme, ";");
 }
 
-TEST(LexerTest, TokenizesColon)
+TEST(ScannerTest, TokenizesColon)
 {
     // Given
-    Lexer lexer(":");
+    Scanner scanner(":");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 2);
@@ -466,13 +466,13 @@ TEST(LexerTest, TokenizesColon)
     EXPECT_EQ(tokens[0].m_lexeme, ":");
 }
 
-TEST(LexerTest, TokenizesComma)
+TEST(ScannerTest, TokenizesComma)
 {
     // Given
-    Lexer lexer(",");
+    Scanner scanner(",");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 2);
@@ -480,13 +480,13 @@ TEST(LexerTest, TokenizesComma)
     EXPECT_EQ(tokens[0].m_lexeme, ",");
 }
 
-TEST(LexerTest, TokenizesDot)
+TEST(ScannerTest, TokenizesDot)
 {
     // Given
-    Lexer lexer(".");
+    Scanner scanner(".");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 2);
@@ -494,13 +494,13 @@ TEST(LexerTest, TokenizesDot)
     EXPECT_EQ(tokens[0].m_lexeme, ".");
 }
 
-TEST(LexerTest, TokenizesStar)
+TEST(ScannerTest, TokenizesStar)
 {
     // Given
-    Lexer lexer("*");
+    Scanner scanner("*");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 2);
@@ -508,13 +508,13 @@ TEST(LexerTest, TokenizesStar)
     EXPECT_EQ(tokens[0].m_lexeme, "*");
 }
 
-TEST(LexerTest, TokenizesLess)
+TEST(ScannerTest, TokenizesLess)
 {
     // Given
-    Lexer lexer("<");
+    Scanner scanner("<");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 2);
@@ -522,13 +522,13 @@ TEST(LexerTest, TokenizesLess)
     EXPECT_EQ(tokens[0].m_lexeme, "<");
 }
 
-TEST(LexerTest, TokenizesGreater)
+TEST(ScannerTest, TokenizesGreater)
 {
     // Given
-    Lexer lexer(">");
+    Scanner scanner(">");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 2);
@@ -536,13 +536,13 @@ TEST(LexerTest, TokenizesGreater)
     EXPECT_EQ(tokens[0].m_lexeme, ">");
 }
 
-TEST(LexerTest, TokenizesEqual)
+TEST(ScannerTest, TokenizesEqual)
 {
     // Given
-    Lexer lexer("=");
+    Scanner scanner("=");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 2);
@@ -550,13 +550,13 @@ TEST(LexerTest, TokenizesEqual)
     EXPECT_EQ(tokens[0].m_lexeme, "=");
 }
 
-TEST(LexerTest, TokenizesEqualEqual)
+TEST(ScannerTest, TokenizesEqualEqual)
 {
     // Given
-    Lexer lexer("==");
+    Scanner scanner("==");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 2);
@@ -564,13 +564,13 @@ TEST(LexerTest, TokenizesEqualEqual)
     EXPECT_EQ(tokens[0].m_lexeme, "==");
 }
 
-TEST(LexerTest, TokenizesNotEqual)
+TEST(ScannerTest, TokenizesNotEqual)
 {
     // Given
-    Lexer lexer("!=");
+    Scanner scanner("!=");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 2);
@@ -578,13 +578,13 @@ TEST(LexerTest, TokenizesNotEqual)
     EXPECT_EQ(tokens[0].m_lexeme, "!=");
 }
 
-TEST(LexerTest, TokenizesArrow)
+TEST(ScannerTest, TokenizesArrow)
 {
     // Given
-    Lexer lexer("->");
+    Scanner scanner("->");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 2);
@@ -593,13 +593,13 @@ TEST(LexerTest, TokenizesArrow)
 }
 
 // Logical operators
-TEST(LexerTest, TokenizesNotOperator)
+TEST(ScannerTest, TokenizesNotOperator)
 {
     // Given
-    Lexer lexer("!");
+    Scanner scanner("!");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 2);
@@ -607,13 +607,13 @@ TEST(LexerTest, TokenizesNotOperator)
     EXPECT_EQ(tokens[0].m_lexeme, "!");
 }
 
-TEST(LexerTest, TokenizesAndOperator)
+TEST(ScannerTest, TokenizesAndOperator)
 {
     // Given
-    Lexer lexer("&&");
+    Scanner scanner("&&");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 2);
@@ -621,13 +621,13 @@ TEST(LexerTest, TokenizesAndOperator)
     EXPECT_EQ(tokens[0].m_lexeme, "&&");
 }
 
-TEST(LexerTest, TokenizesOrOperator)
+TEST(ScannerTest, TokenizesOrOperator)
 {
     // Given
-    Lexer lexer("||");
+    Scanner scanner("||");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 2);
@@ -635,13 +635,13 @@ TEST(LexerTest, TokenizesOrOperator)
     EXPECT_EQ(tokens[0].m_lexeme, "||");
 }
 
-TEST(LexerTest, TokenizesMinus)
+TEST(ScannerTest, TokenizesMinus)
 {
     // Given
-    Lexer lexer("-");
+    Scanner scanner("-");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 2);
@@ -649,13 +649,13 @@ TEST(LexerTest, TokenizesMinus)
     EXPECT_EQ(tokens[0].m_lexeme, "-");
 }
 
-TEST(LexerTest, TokenizesUnknownCharacter)
+TEST(ScannerTest, TokenizesUnknownCharacter)
 {
     // Given
-    Lexer lexer("@");
+    Scanner scanner("@");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 2);
@@ -664,13 +664,13 @@ TEST(LexerTest, TokenizesUnknownCharacter)
 }
 
 // Identifier edge cases
-TEST(LexerTest, TokenizesIdentifierStartingWithUnderscore)
+TEST(ScannerTest, TokenizesIdentifierStartingWithUnderscore)
 {
     // Given
-    Lexer lexer("_privateVar");
+    Scanner scanner("_privateVar");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 2);
@@ -678,13 +678,13 @@ TEST(LexerTest, TokenizesIdentifierStartingWithUnderscore)
     EXPECT_EQ(tokens[0].m_lexeme, "_privateVar");
 }
 
-TEST(LexerTest, TokenizesIdentifierWithNumbers)
+TEST(ScannerTest, TokenizesIdentifierWithNumbers)
 {
     // Given
-    Lexer lexer("var123");
+    Scanner scanner("var123");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 2);
@@ -692,13 +692,13 @@ TEST(LexerTest, TokenizesIdentifierWithNumbers)
     EXPECT_EQ(tokens[0].m_lexeme, "var123");
 }
 
-TEST(LexerTest, TokenizesIdentifierWithUnderscores)
+TEST(ScannerTest, TokenizesIdentifierWithUnderscores)
 {
     // Given
-    Lexer lexer("my_var_name");
+    Scanner scanner("my_var_name");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 2);
@@ -706,13 +706,13 @@ TEST(LexerTest, TokenizesIdentifierWithUnderscores)
     EXPECT_EQ(tokens[0].m_lexeme, "my_var_name");
 }
 
-TEST(LexerTest, TokenizesSingleUnderscoreAsIdentifier)
+TEST(ScannerTest, TokenizesSingleUnderscoreAsIdentifier)
 {
     // Given
-    Lexer lexer("_");
+    Scanner scanner("_");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 2);
@@ -721,13 +721,13 @@ TEST(LexerTest, TokenizesSingleUnderscoreAsIdentifier)
 }
 
 // String literal edge cases
-TEST(LexerTest, TokenizesEmptyString)
+TEST(ScannerTest, TokenizesEmptyString)
 {
     // Given
-    Lexer lexer("\"\"");
+    Scanner scanner("\"\"");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 2);
@@ -735,26 +735,26 @@ TEST(LexerTest, TokenizesEmptyString)
     EXPECT_EQ(tokens[0].m_lexeme, "");
 }
 
-TEST(LexerTest, IgnoresUnterminatedString)
+TEST(ScannerTest, IgnoresUnterminatedString)
 {
     // Given
-    Lexer lexer("\"unterminated");
+    Scanner scanner("\"unterminated");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then - unterminated string produces no token, only EOF
     ASSERT_EQ(tokens.size(), 1);
     EXPECT_EQ(tokens[0].m_type, TokenType::EndOfFile);
 }
 
-TEST(LexerTest, TokenizesMultilineString)
+TEST(ScannerTest, TokenizesMultilineString)
 {
     // Given
-    Lexer lexer("\"hello\nworld\"");
+    Scanner scanner("\"hello\nworld\"");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 2);
@@ -763,13 +763,13 @@ TEST(LexerTest, TokenizesMultilineString)
 }
 
 // Line number tracking
-TEST(LexerTest, TracksLineNumbersAcrossNewlines)
+TEST(ScannerTest, TracksLineNumbersAcrossNewlines)
 {
     // Given
-    Lexer lexer("var\n\nfn");
+    Scanner scanner("var\n\nfn");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 3);
@@ -779,14 +779,14 @@ TEST(LexerTest, TracksLineNumbersAcrossNewlines)
     EXPECT_EQ(tokens[1].m_CurrentLine, 3);
 }
 
-TEST(LexerTest, TracksLineNumberInMultilineString)
+TEST(ScannerTest, TracksLineNumberInMultilineString)
 {
     // Given
     std::string source = "\"line1\nline2\"\nvar";
-    Lexer lexer(source);
+    Scanner scanner(source);
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 3);
@@ -796,13 +796,13 @@ TEST(LexerTest, TracksLineNumberInMultilineString)
 }
 
 // Whitespace handling
-TEST(LexerTest, HandlesTabsAsWhitespace)
+TEST(ScannerTest, HandlesTabsAsWhitespace)
 {
     // Given
-    Lexer lexer("var\tfn");
+    Scanner scanner("var\tfn");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 3);
@@ -810,13 +810,13 @@ TEST(LexerTest, HandlesTabsAsWhitespace)
     EXPECT_EQ(tokens[1].m_type, TokenType::Fn);
 }
 
-TEST(LexerTest, HandlesCarriageReturnAsWhitespace)
+TEST(ScannerTest, HandlesCarriageReturnAsWhitespace)
 {
     // Given
-    Lexer lexer("var\rfn");
+    Scanner scanner("var\rfn");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 3);
@@ -824,13 +824,13 @@ TEST(LexerTest, HandlesCarriageReturnAsWhitespace)
     EXPECT_EQ(tokens[1].m_type, TokenType::Fn);
 }
 
-TEST(LexerTest, HandlesMultipleSpaces)
+TEST(ScannerTest, HandlesMultipleSpaces)
 {
     // Given
-    Lexer lexer("var    fn");
+    Scanner scanner("var    fn");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 3);
@@ -838,13 +838,13 @@ TEST(LexerTest, HandlesMultipleSpaces)
     EXPECT_EQ(tokens[1].m_type, TokenType::Fn);
 }
 
-TEST(LexerTest, HandlesMixedWhitespace)
+TEST(ScannerTest, HandlesMixedWhitespace)
 {
     // Given
-    Lexer lexer("var \t\r\n fn");
+    Scanner scanner("var \t\r\n fn");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 3);
@@ -853,14 +853,14 @@ TEST(LexerTest, HandlesMixedWhitespace)
 }
 
 // Integration tests - complex scenarios
-TEST(LexerTest, TokenizesFunctionSignature)
+TEST(ScannerTest, TokenizesFunctionSignature)
 {
     // Given
     std::string source = "fn main() -> void";
-    Lexer lexer(source);
+    Scanner scanner(source);
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 7);
@@ -874,14 +874,14 @@ TEST(LexerTest, TokenizesFunctionSignature)
     EXPECT_EQ(tokens[6].m_type, TokenType::EndOfFile);
 }
 
-TEST(LexerTest, TokenizesVariableDeclaration)
+TEST(ScannerTest, TokenizesVariableDeclaration)
 {
     // Given
     std::string source = "var x: i32 = 42;";
-    Lexer lexer(source);
+    Scanner scanner(source);
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 8);
@@ -897,14 +897,14 @@ TEST(LexerTest, TokenizesVariableDeclaration)
     EXPECT_EQ(tokens[7].m_type, TokenType::EndOfFile);
 }
 
-TEST(LexerTest, TokenizesIfElseStatement)
+TEST(ScannerTest, TokenizesIfElseStatement)
 {
     // Given
     std::string source = "if x == 0 { return null; } else { return x; }";
-    Lexer lexer(source);
+    Scanner scanner(source);
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 16);
@@ -926,14 +926,14 @@ TEST(LexerTest, TokenizesIfElseStatement)
     EXPECT_EQ(tokens[15].m_type, TokenType::EndOfFile);
 }
 
-TEST(LexerTest, TokenizesStructDefinition)
+TEST(ScannerTest, TokenizesStructDefinition)
 {
     // Given
     std::string source = "struct Point { x: f32, y: f32 }";
-    Lexer lexer(source);
+    Scanner scanner(source);
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 12);
@@ -953,14 +953,14 @@ TEST(LexerTest, TokenizesStructDefinition)
     EXPECT_EQ(tokens[11].m_type, TokenType::EndOfFile);
 }
 
-TEST(LexerTest, TokenizesPointerType)
+TEST(ScannerTest, TokenizesPointerType)
 {
     // Given
     std::string source = "var ptr: *i32 = alloc;";
-    Lexer lexer(source);
+    Scanner scanner(source);
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 9);
@@ -975,13 +975,13 @@ TEST(LexerTest, TokenizesPointerType)
     EXPECT_EQ(tokens[8].m_type, TokenType::EndOfFile);
 }
 
-TEST(LexerTest, TokenizesMemberAccess)
+TEST(ScannerTest, TokenizesMemberAccess)
 {
     // Given
-    Lexer lexer("point.x");
+    Scanner scanner("point.x");
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 4);
@@ -992,14 +992,14 @@ TEST(LexerTest, TokenizesMemberAccess)
     EXPECT_EQ(tokens[2].m_lexeme, "x");
 }
 
-TEST(LexerTest, TokenizesComparisonOperators)
+TEST(ScannerTest, TokenizesComparisonOperators)
 {
     // Given
     std::string source = "a < b > c != d == e";
-    Lexer lexer(source);
+    Scanner scanner(source);
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 10);
@@ -1015,14 +1015,14 @@ TEST(LexerTest, TokenizesComparisonOperators)
     EXPECT_EQ(tokens[9].m_type, TokenType::EndOfFile);
 }
 
-TEST(LexerTest, TokenizesInterfaceDefinition)
+TEST(ScannerTest, TokenizesInterfaceDefinition)
 {
     // Given
     std::string source = "interface Drawable { fn draw() -> void; }";
-    Lexer lexer(source);
+    Scanner scanner(source);
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 12);
@@ -1041,14 +1041,14 @@ TEST(LexerTest, TokenizesInterfaceDefinition)
     EXPECT_EQ(tokens[11].m_type, TokenType::EndOfFile);
 }
 
-TEST(LexerTest, TokenizesAllTypeKeywordsTogether)
+TEST(ScannerTest, TokenizesAllTypeKeywordsTogether)
 {
     // Given
     std::string source = "i8 i16 i32 i64 u8 u16 u32 u64 f32 f64 bool char void";
-    Lexer lexer(source);
+    Scanner scanner(source);
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 14);
@@ -1068,14 +1068,14 @@ TEST(LexerTest, TokenizesAllTypeKeywordsTogether)
     EXPECT_EQ(tokens[13].m_type, TokenType::EndOfFile);
 }
 
-TEST(LexerTest, TokenizesBooleanExpression)
+TEST(ScannerTest, TokenizesBooleanExpression)
 {
     // Given
     std::string source = "true && false || !x";
-    Lexer lexer(source);
+    Scanner scanner(source);
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 7);
@@ -1088,14 +1088,14 @@ TEST(LexerTest, TokenizesBooleanExpression)
     EXPECT_EQ(tokens[6].m_type, TokenType::EndOfFile);
 }
 
-TEST(LexerTest, TokenizesWhileLoop)
+TEST(ScannerTest, TokenizesWhileLoop)
 {
     // Given
     std::string source = "while x < 10 { x = x + 1; }";
-    Lexer lexer(source);
+    Scanner scanner(source);
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 13);
@@ -1114,14 +1114,14 @@ TEST(LexerTest, TokenizesWhileLoop)
     EXPECT_EQ(tokens[12].m_type, TokenType::EndOfFile);
 }
 
-TEST(LexerTest, TokenizesBooleanVariableDeclaration)
+TEST(ScannerTest, TokenizesBooleanVariableDeclaration)
 {
     // Given
     std::string source = "var isActive: bool = true;";
-    Lexer lexer(source);
+    Scanner scanner(source);
 
     // When
-    std::vector<Token> tokens = lexer.Tokenize();
+    std::vector<Token> tokens = scanner.Tokenize();
 
     // Then
     ASSERT_EQ(tokens.size(), 8);

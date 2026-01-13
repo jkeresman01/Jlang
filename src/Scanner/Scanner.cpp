@@ -1,4 +1,4 @@
-#include "../Lexer/Lexer.h"
+#include "../Scanner/Scanner.h"
 
 #include <cctype>
 #include <unordered_map>
@@ -39,9 +39,9 @@ static std::unordered_map<std::string, TokenType> s_Keywords = {
     {"alloc", TokenType::Alloc},
 };
 
-Lexer::Lexer(const std::string &source) : m_Source(source) {}
+Scanner::Lexer(const std::string &source) : m_Source(source) {}
 
-std::vector<Token> Lexer::Tokenize()
+std::vector<Token> Scanner::Tokenize()
 {
     while (!IsEndReached())
     {
@@ -58,7 +58,7 @@ std::vector<Token> Lexer::Tokenize()
     return m_Tokens;
 }
 
-void Lexer::ScanToken()
+void Scanner::ScanToken()
 {
     char c = Advance();
 
@@ -158,7 +158,7 @@ void Lexer::ScanToken()
     }
 }
 
-void Lexer::SkipWhitespace()
+void Scanner::SkipWhitespace()
 {
     while (!IsEndReached())
     {
@@ -180,17 +180,17 @@ void Lexer::SkipWhitespace()
     }
 }
 
-char Lexer::Advance()
+char Scanner::Advance()
 {
     return m_Source[m_CurrentPosition++];
 }
 
-char Lexer::Peek() const
+char Scanner::Peek() const
 {
     return IsEndReached() ? '\0' : m_Source[m_CurrentPosition];
 }
 
-bool Lexer::IsMatched(char expected)
+bool Scanner::IsMatched(char expected)
 {
     if (IsEndReached() || m_Source[m_CurrentPosition] != expected)
     {
@@ -201,22 +201,22 @@ bool Lexer::IsMatched(char expected)
     return true;
 }
 
-bool Lexer::IsEndReached() const
+bool Scanner::IsEndReached() const
 {
     return m_CurrentPosition >= m_Source.length();
 }
 
-void Lexer::AddToken(TokenType type)
+void Scanner::AddToken(TokenType type)
 {
     AddToken(type, m_Source.substr(m_Start, m_CurrentPosition - m_Start));
 }
 
-void Lexer::AddToken(TokenType type, const std::string &lexeme)
+void Scanner::AddToken(TokenType type, const std::string &lexeme)
 {
     m_Tokens.emplace_back(type, lexeme, m_CurrentLine);
 }
 
-void Lexer::AddIdentifier()
+void Scanner::AddIdentifier()
 {
     while (std::isalnum(Peek()) || Peek() == '_')
     {
@@ -229,7 +229,7 @@ void Lexer::AddIdentifier()
     AddToken(type, text);
 }
 
-void Lexer::AddNumber()
+void Scanner::AddNumber()
 {
     while (std::isdigit(Peek()))
     {
@@ -239,7 +239,7 @@ void Lexer::AddNumber()
     AddToken(TokenType::NumberLiteral);
 }
 
-void Lexer::AddStringLiteral()
+void Scanner::AddStringLiteral()
 {
     while (Peek() != '"' && !IsEndReached())
     {
@@ -263,7 +263,7 @@ void Lexer::AddStringLiteral()
     AddToken(TokenType::StringLiteral, value);
 }
 
-TokenType Lexer::IsKeywordOrIdentifier(const std::string &text)
+TokenType Scanner::IsKeywordOrIdentifier(const std::string &text)
 {
     auto it = s_Keywords.find(text);
     return it != s_Keywords.end() ? it->second : TokenType::Identifier;
