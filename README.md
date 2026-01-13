@@ -90,7 +90,7 @@ var g: u64 = 18446744073709551615;
 ```
 
 > [!NOTE]
-> Type keywords are recognized but literals are always treated as `i32`. Needs: update code generator to infer literal type from variable declaration.
+> Type keywords are recognized but literals are always treated as `i32`. Needs code generator to infer literal type from variable declaration.
 
 #### Planned: Floating point
 
@@ -100,7 +100,7 @@ var precise: f64 = 3.141592653589793;
 ```
 
 > [!NOTE]
-> Type keywords are recognized but float literals are not parsed. Needs: add decimal point handling in lexer and float literal code generation.
+> Type keywords are recognized but float literals are not parsed. Needs decimal point handling in lexer and float literal code generation.
 
 #### Planned: Character literals
 
@@ -109,7 +109,7 @@ var letter: char = 'A';
 ```
 
 > [!NOTE]
-> The `char` type is recognized but character literals are not parsed. Needs: add single-quote character literal handling in lexer.
+> The `char` type is recognized but character literals are not parsed. Needs single-quote character literal handling in lexer.
 
 #### Control Flow: C-style if/else and while
 
