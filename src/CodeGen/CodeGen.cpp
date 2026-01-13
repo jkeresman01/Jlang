@@ -73,12 +73,12 @@ void CodeGenerator::VisitFunctionDecl(FunctionDecl &node)
     llvm::BasicBlock *entry = llvm::BasicBlock::Create(m_Context, "entry", function);
     m_IRBuilder.SetInsertPoint(entry);
 
-    unsigned i = 0;
+    unsigned paramIndex = 0;
     for (auto &arg : function->args())
     {
-        arg.setName(node.params[i].name);
-        m_namedValues[node.params[i].name] = &arg;
-        ++i;
+        arg.setName(node.params[paramIndex].name);
+        m_namedValues[node.params[paramIndex].name] = &arg;
+        ++paramIndex;
     }
 
     if (node.body)
@@ -124,18 +124,18 @@ void CodeGenerator::VisitVariableDecl(VariableDecl &node)
 void CodeGenerator::VisitIfStatement(IfStatement &node)
 {
     node.condition->Accept(*this);
-    llvm::Value *isConditionalValue = m_LastValue;
+    llvm::Value *conditionValue = m_LastValue;
 
-    if (!isConditionalValue)
+    if (!conditionValue)
     {
         JLANG_ERROR("Invalid condition in if statement");
         return;
     }
 
-    if (isConditionalValue->getType()->isIntegerTy(32))
+    if (conditionValue->getType()->isIntegerTy(32))
     {
-        isConditionalValue = m_IRBuilder.CreateICmpNE(
-            isConditionalValue, llvm::ConstantInt::get(isConditionalValue->getType(), 0), "ifcond");
+        conditionValue = m_IRBuilder.CreateICmpNE(
+            conditionValue, llvm::ConstantInt::get(conditionValue->getType(), 0), "ifcond");
     }
 
     llvm::Function *parentFunction = m_IRBuilder.GetInsertBlock()->getParent();
@@ -144,7 +144,7 @@ void CodeGenerator::VisitIfStatement(IfStatement &node)
     llvm::BasicBlock *elseBlock = llvm::BasicBlock::Create(m_Context, "else");
     llvm::BasicBlock *mergeBlock = llvm::BasicBlock::Create(m_Context, "ifcont");
 
-    m_IRBuilder.CreateCondBr(isConditionalValue, thenBlock, elseBlock);
+    m_IRBuilder.CreateCondBr(conditionValue, thenBlock, elseBlock);
 
     m_IRBuilder.SetInsertPoint(thenBlock);
     node.thenBranch->Accept(*this);
@@ -371,15 +371,15 @@ void CodeGenerator::VisitVarExpr(VarExpr &node)
         return;
     }
 
-    llvm::Value *val = it->second;
+    llvm::Value *storedValue = it->second;
 
-    if (llvm::AllocaInst *alloca = llvm::dyn_cast<llvm::AllocaInst>(val))
+    if (llvm::AllocaInst *alloca = llvm::dyn_cast<llvm::AllocaInst>(storedValue))
     {
         m_LastValue = m_IRBuilder.CreateLoad(alloca->getAllocatedType(), alloca, node.name);
     }
     else
     {
-        m_LastValue = val;
+        m_LastValue = storedValue;
     }
 }
 
@@ -453,9 +453,9 @@ void CodeGenerator::VisitAssignExpr(AssignExpr &node)
         return;
     }
 
-    llvm::Value *var = it->second;
+    llvm::Value *targetVar = it->second;
 
-    if (llvm::AllocaInst *alloca = llvm::dyn_cast<llvm::AllocaInst>(var))
+    if (llvm::AllocaInst *alloca = llvm::dyn_cast<llvm::AllocaInst>(targetVar))
     {
         m_IRBuilder.CreateStore(valueToStore, alloca);
         m_LastValue = valueToStore;
