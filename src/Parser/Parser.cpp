@@ -519,7 +519,7 @@ std::shared_ptr<AstNode> Parser::ParseWhileStatement()
 
 std::shared_ptr<AstNode> Parser::ParseExpression()
 {
-    auto expr = ParseEquality();
+    auto expr = ParseLogicalOr();
 
     // Handle assignment: identifier = expression
     if (IsMatched(TokenType::Equal))
@@ -541,6 +541,46 @@ std::shared_ptr<AstNode> Parser::ParseExpression()
     }
 
     return expr;
+}
+
+std::shared_ptr<AstNode> Parser::ParseLogicalOr()
+{
+    auto left = ParseLogicalAnd();
+
+    while (Check(TokenType::Or))
+    {
+        std::string op = Peek().m_lexeme;
+        Advance();
+        auto right = ParseLogicalAnd();
+
+        auto binary = std::make_shared<BinaryExpr>();
+        binary->op = op;
+        binary->left = left;
+        binary->right = right;
+        left = binary;
+    }
+
+    return left;
+}
+
+std::shared_ptr<AstNode> Parser::ParseLogicalAnd()
+{
+    auto left = ParseEquality();
+
+    while (Check(TokenType::And))
+    {
+        std::string op = Peek().m_lexeme;
+        Advance();
+        auto right = ParseEquality();
+
+        auto binary = std::make_shared<BinaryExpr>();
+        binary->op = op;
+        binary->left = left;
+        binary->right = right;
+        left = binary;
+    }
+
+    return left;
 }
 
 std::shared_ptr<AstNode> Parser::ParseEquality()
@@ -605,13 +645,13 @@ std::shared_ptr<AstNode> Parser::ParseAdditive()
 
 std::shared_ptr<AstNode> Parser::ParseMultiplicative()
 {
-    auto left = ParsePrimary();
+    auto left = ParseUnary();
 
     while (Check(TokenType::Star) || Check(TokenType::Slash))
     {
         std::string op = Peek().m_lexeme;
         Advance();
-        auto right = ParsePrimary();
+        auto right = ParseUnary();
 
         auto binary = std::make_shared<BinaryExpr>();
         binary->op = op;
@@ -621,6 +661,23 @@ std::shared_ptr<AstNode> Parser::ParseMultiplicative()
     }
 
     return left;
+}
+
+std::shared_ptr<AstNode> Parser::ParseUnary()
+{
+    if (Check(TokenType::Not))
+    {
+        std::string op = Peek().m_lexeme;
+        Advance();
+        auto operand = ParseUnary();
+
+        auto unary = std::make_shared<UnaryExpr>();
+        unary->op = op;
+        unary->operand = operand;
+        return unary;
+    }
+
+    return ParsePrimary();
 }
 
 std::shared_ptr<AstNode> Parser::ParseExprStatement()
@@ -656,6 +713,22 @@ std::shared_ptr<AstNode> Parser::ParsePrimary()
     {
         auto literal = std::make_shared<LiteralExpr>();
         literal->value = "null";
+        return literal;
+    }
+
+    // Handle true literal
+    if (IsMatched(TokenType::True))
+    {
+        auto literal = std::make_shared<LiteralExpr>();
+        literal->value = "true";
+        return literal;
+    }
+
+    // Handle false literal
+    if (IsMatched(TokenType::False))
+    {
+        auto literal = std::make_shared<LiteralExpr>();
+        literal->value = "false";
         return literal;
     }
 

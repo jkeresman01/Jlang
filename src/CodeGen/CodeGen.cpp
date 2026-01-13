@@ -329,9 +329,118 @@ void CodeGenerator::VisitBinaryExpr(BinaryExpr &node)
     {
         m_LastValue = m_IRBuilder.CreateSDiv(leftVal, rightVal, "div");
     }
+    else if (node.op == "&&")
+    {
+        // Short-circuit AND: if left is false, result is false; otherwise evaluate right
+        llvm::Function *parentFunction = m_IRBuilder.GetInsertBlock()->getParent();
+
+        llvm::BasicBlock *rhsBlock = llvm::BasicBlock::Create(m_Context, "and.rhs", parentFunction);
+        llvm::BasicBlock *mergeBlock = llvm::BasicBlock::Create(m_Context, "and.merge");
+
+        // Convert left to i1 if needed
+        llvm::Value *leftBool = leftVal;
+        if (!leftVal->getType()->isIntegerTy(1))
+        {
+            leftBool =
+                m_IRBuilder.CreateICmpNE(leftVal, llvm::ConstantInt::get(leftVal->getType(), 0), "tobool");
+        }
+
+        llvm::BasicBlock *entryBlock = m_IRBuilder.GetInsertBlock();
+        m_IRBuilder.CreateCondBr(leftBool, rhsBlock, mergeBlock);
+
+        // RHS block
+        m_IRBuilder.SetInsertPoint(rhsBlock);
+        llvm::Value *rightBool = rightVal;
+        if (!rightVal->getType()->isIntegerTy(1))
+        {
+            rightBool =
+                m_IRBuilder.CreateICmpNE(rightVal, llvm::ConstantInt::get(rightVal->getType(), 0), "tobool");
+        }
+        llvm::BasicBlock *rhsEndBlock = m_IRBuilder.GetInsertBlock();
+        m_IRBuilder.CreateBr(mergeBlock);
+
+        // Merge block
+        mergeBlock->insertInto(parentFunction);
+        m_IRBuilder.SetInsertPoint(mergeBlock);
+
+        llvm::PHINode *phi = m_IRBuilder.CreatePHI(llvm::Type::getInt1Ty(m_Context), 2, "and.result");
+        phi->addIncoming(llvm::ConstantInt::get(llvm::Type::getInt1Ty(m_Context), 0), entryBlock);
+        phi->addIncoming(rightBool, rhsEndBlock);
+
+        m_LastValue = phi;
+    }
+    else if (node.op == "||")
+    {
+        // Short-circuit OR: if left is true, result is true; otherwise evaluate right
+        llvm::Function *parentFunction = m_IRBuilder.GetInsertBlock()->getParent();
+
+        llvm::BasicBlock *rhsBlock = llvm::BasicBlock::Create(m_Context, "or.rhs", parentFunction);
+        llvm::BasicBlock *mergeBlock = llvm::BasicBlock::Create(m_Context, "or.merge");
+
+        // Convert left to i1 if needed
+        llvm::Value *leftBool = leftVal;
+        if (!leftVal->getType()->isIntegerTy(1))
+        {
+            leftBool =
+                m_IRBuilder.CreateICmpNE(leftVal, llvm::ConstantInt::get(leftVal->getType(), 0), "tobool");
+        }
+
+        llvm::BasicBlock *entryBlock = m_IRBuilder.GetInsertBlock();
+        m_IRBuilder.CreateCondBr(leftBool, mergeBlock, rhsBlock);
+
+        // RHS block
+        m_IRBuilder.SetInsertPoint(rhsBlock);
+        llvm::Value *rightBool = rightVal;
+        if (!rightVal->getType()->isIntegerTy(1))
+        {
+            rightBool =
+                m_IRBuilder.CreateICmpNE(rightVal, llvm::ConstantInt::get(rightVal->getType(), 0), "tobool");
+        }
+        llvm::BasicBlock *rhsEndBlock = m_IRBuilder.GetInsertBlock();
+        m_IRBuilder.CreateBr(mergeBlock);
+
+        // Merge block
+        mergeBlock->insertInto(parentFunction);
+        m_IRBuilder.SetInsertPoint(mergeBlock);
+
+        llvm::PHINode *phi = m_IRBuilder.CreatePHI(llvm::Type::getInt1Ty(m_Context), 2, "or.result");
+        phi->addIncoming(llvm::ConstantInt::get(llvm::Type::getInt1Ty(m_Context), 1), entryBlock);
+        phi->addIncoming(rightBool, rhsEndBlock);
+
+        m_LastValue = phi;
+    }
     else
     {
         JLANG_ERROR(STR("Unknown binary operator: %s", node.op.c_str()));
+    }
+}
+
+void CodeGenerator::VisitUnaryExpr(UnaryExpr &node)
+{
+    node.operand->Accept(*this);
+    llvm::Value *operandVal = m_LastValue;
+
+    if (!operandVal)
+    {
+        JLANG_ERROR("Invalid operand in unary expression");
+        return;
+    }
+
+    if (node.op == "!")
+    {
+        // Logical NOT
+        llvm::Value *boolVal = operandVal;
+        if (!operandVal->getType()->isIntegerTy(1))
+        {
+            boolVal = m_IRBuilder.CreateICmpNE(operandVal, llvm::ConstantInt::get(operandVal->getType(), 0),
+                                               "tobool");
+        }
+        m_LastValue = m_IRBuilder.CreateXor(
+            boolVal, llvm::ConstantInt::get(llvm::Type::getInt1Ty(m_Context), 1), "not");
+    }
+    else
+    {
+        JLANG_ERROR(STR("Unknown unary operator: %s", node.op.c_str()));
     }
 }
 
@@ -341,6 +450,14 @@ void CodeGenerator::VisitLiteralExpr(LiteralExpr &node)
     {
         m_LastValue =
             llvm::ConstantPointerNull::get(llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(m_Context)));
+    }
+    else if (node.value == "true")
+    {
+        m_LastValue = llvm::ConstantInt::get(llvm::Type::getInt1Ty(m_Context), 1);
+    }
+    else if (node.value == "false")
+    {
+        m_LastValue = llvm::ConstantInt::get(llvm::Type::getInt1Ty(m_Context), 0);
     }
     else if (node.value.front() == '"' && node.value.back() == '"')
     {

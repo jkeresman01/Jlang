@@ -63,11 +63,53 @@ fn add(a: i32, b: i32) -> i32 {
 #### Variables: `var` with colon-separated types
 
 ```rust
-var name: char* = "jlang";
+// Integer (supported)
 var count: i32 = 42;
+
+// String (supported)
+var name: char* = "jlang";
+
+// Boolean (supported)
+var isReady: bool = true;
+var isEmpty: bool = false;
 ```
 
 <h6><i>The colon syntax (`name: Type`) clearly separates identifiers from types and is consistent with modern languages like TypeScript, Kotlin, and Rust.</i></h6>
+
+#### Planned: Integer sizes
+
+```rust
+var a: i8 = 127;
+var b: i16 = 32767;
+var c: i64 = 9223372036854775807;
+
+var d: u8 = 255;
+var e: u16 = 65535;
+var f: u32 = 100;
+var g: u64 = 18446744073709551615;
+```
+
+> [!NOTE]
+> Type keywords are recognized but literals are always treated as `i32`. Needs: update code generator to infer literal type from variable declaration.
+
+#### Planned: Floating point
+
+```rust
+var pi: f32 = 3.14;
+var precise: f64 = 3.141592653589793;
+```
+
+> [!NOTE]
+> Type keywords are recognized but float literals are not parsed. Needs: add decimal point handling in lexer and float literal code generation.
+
+#### Planned: Character literals
+
+```rust
+var letter: char = 'A';
+```
+
+> [!NOTE]
+> The `char` type is recognized but character literals are not parsed. Needs: add single-quote character literal handling in lexer.
 
 #### Control Flow: C-style if/else and while
 
@@ -133,6 +175,49 @@ if (p == null) { ... }
 > [!TIP]
 > Always check if `alloc<T>()` returns `null` before using the pointer.
 
+#### Logical operators
+
+```rust
+if (a && b) {
+    printf("both are true");
+}
+
+if (a || b) {
+    printf("at least one is true");
+}
+
+if (!a) {
+    printf("a is false");
+}
+```
+
+<h6><i>Logical AND (`&&`), OR (`||`), and NOT (`!`) work as expected from C-family languages.</i></h6>
+
+#### Short-circuit evaluation
+
+Logical operators use short-circuit evaluation - the right operand is only evaluated if necessary:
+
+```rust
+// If isValid is false, expensiveCheck() is never called
+if (isValid && expensiveCheck()) {
+    printf("both conditions passed");
+}
+
+// If hasCache is true, loadFromDisk() is never called
+if (hasCache || loadFromDisk()) {
+    printf("data is available");
+}
+```
+
+<h6><i>This is useful for guarding against null pointer access or avoiding expensive operations:</i></h6>
+
+```rust
+// Safe: if p is null, we never access p.value
+if (p != null && p.value > 0) {
+    printf("positive value");
+}
+```
+
 ### Memory: manual management
 
 ```rust
@@ -145,18 +230,6 @@ free(p);
 
 > [!IMPORTANT]
 > You are responsible for freeing all allocated memory. Forgetting to call `free()` will cause memory leaks.
-
-#### Primitive types
-
-| Type | Description |
-|------|-------------|
-| `i8`, `i16`, `i32`, `i64` | Signed integers |
-| `u8`, `u16`, `u32`, `u64` | Unsigned integers |
-| `f32`, `f64` | Floating point |
-| `char` | Character |
-| `bool` | Boolean |
-
-<h6><i>Explicit bit-width types make memory layout predictable and clear.</i></h6>
 
 ## Getting started
 

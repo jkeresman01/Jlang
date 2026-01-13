@@ -33,6 +33,8 @@ static std::unordered_map<std::string, TokenType> s_Keywords = {
     {"char", TokenType::Char},
     // Literals
     {"null", TokenType::Null},
+    {"true", TokenType::True},
+    {"false", TokenType::False},
     // Memory
     {"alloc", TokenType::Alloc},
 };
@@ -99,7 +101,27 @@ void Lexer::ScanToken()
         AddToken(IsMatched('=') ? TokenType::EqualEqual : TokenType::Equal);
         break;
     case '!':
-        AddToken(IsMatched('=') ? TokenType::NotEqual : TokenType::Unknown);
+        AddToken(IsMatched('=') ? TokenType::NotEqual : TokenType::Not);
+        break;
+    case '&':
+        if (IsMatched('&'))
+        {
+            AddToken(TokenType::And);
+        }
+        else
+        {
+            AddToken(TokenType::Unknown);
+        }
+        break;
+    case '|':
+        if (IsMatched('|'))
+        {
+            AddToken(TokenType::Or);
+        }
+        else
+        {
+            AddToken(TokenType::Unknown);
+        }
         break;
     case '<':
         AddToken(TokenType::Less);

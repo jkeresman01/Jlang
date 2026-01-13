@@ -31,6 +31,16 @@ struct BinaryExpr : public Expression
     void Accept(AstVisitor &visitor) override { visitor.VisitBinaryExpr(*this); }
 };
 
+struct UnaryExpr : public Expression
+{
+    std::string op;
+    std::shared_ptr<AstNode> operand;
+
+    UnaryExpr() { type = NodeType::UnaryExpr; }
+
+    void Accept(AstVisitor &visitor) override { visitor.VisitUnaryExpr(*this); }
+};
+
 struct VarExpr : public Expression
 {
     std::string name;

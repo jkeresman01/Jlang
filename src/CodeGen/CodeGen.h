@@ -42,6 +42,7 @@ class CodeGenerator : public AstVisitor
 
     virtual void VisitCallExpr(CallExpr &) override;
     virtual void VisitBinaryExpr(BinaryExpr &) override;
+    virtual void VisitUnaryExpr(UnaryExpr &) override;
     virtual void VisitLiteralExpr(LiteralExpr &) override;
     virtual void VisitVarExpr(VarExpr &) override;
     virtual void VisitCastExpr(CastExpr &) override;

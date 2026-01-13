@@ -17,6 +17,7 @@ enum class NodeType
 
     CallExpr,
     BinaryExpr,
+    UnaryExpr,
     VarExpr,
     LiteralExpr,
     CastExpr,

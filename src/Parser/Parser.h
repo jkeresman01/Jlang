@@ -39,10 +39,13 @@ class Parser
     std::shared_ptr<AstNode> ParseReturnStatement();
     std::shared_ptr<AstNode> ParseVarDecl();
     std::shared_ptr<AstNode> ParseExpression();
+    std::shared_ptr<AstNode> ParseLogicalOr();
+    std::shared_ptr<AstNode> ParseLogicalAnd();
     std::shared_ptr<AstNode> ParseEquality();
     std::shared_ptr<AstNode> ParseComparison();
     std::shared_ptr<AstNode> ParseAdditive();
     std::shared_ptr<AstNode> ParseMultiplicative();
+    std::shared_ptr<AstNode> ParseUnary();
     std::shared_ptr<AstNode> ParseExprStatement();
     std::shared_ptr<AstNode> ParsePrimary();
 

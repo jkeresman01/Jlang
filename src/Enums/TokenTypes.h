@@ -15,6 +15,8 @@ enum class TokenType
     Return,
     Null,
     Alloc,
+    True,
+    False,
 
     // Type keywords
     Void,
@@ -51,6 +53,9 @@ enum class TokenType
     Less,
     Greater,
     Equal,
+    And,
+    Or,
+    Not,
 
     // Literals and identifiers
     Identifier,

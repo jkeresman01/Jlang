@@ -15,6 +15,7 @@ struct ExprStatement;
 struct ReturnStatement;
 struct CallExpr;
 struct BinaryExpr;
+struct UnaryExpr;
 struct LiteralExpr;
 struct VarExpr;
 struct CastExpr;
@@ -39,6 +40,7 @@ class AstVisitor
 
     virtual void VisitCallExpr(CallExpr &) = 0;
     virtual void VisitBinaryExpr(BinaryExpr &) = 0;
+    virtual void VisitUnaryExpr(UnaryExpr &) = 0;
     virtual void VisitLiteralExpr(LiteralExpr &) = 0;
     virtual void VisitVarExpr(VarExpr &) = 0;
     virtual void VisitCastExpr(CastExpr &) = 0;
