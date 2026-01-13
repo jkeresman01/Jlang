@@ -39,7 +39,7 @@ static std::unordered_map<std::string, TokenType> s_Keywords = {
     {"alloc", TokenType::Alloc},
 };
 
-Scanner::Lexer(const std::string &source) : m_Source(source) {}
+Scanner::Scanner(const std::string &source) : m_Source(source) {}
 
 std::vector<Token> Scanner::Tokenize()
 {
