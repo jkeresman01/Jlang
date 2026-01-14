@@ -320,6 +320,8 @@ or.merge:
 
 <h6><i>Most languages (C, C++, Java, Rust, Go) only provide short-circuit operators. jlang gives you both options - use `&&`/`||` when you want to skip evaluation, use `and`/`or` when both sides must run.</i></h6>
 
+> **Note:** Take with a grain of salt, need to double check.
+
 ### Memory: manual management
 
 ```rust
