@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <unordered_map>
 
 #include <llvm/IR/Function.h>
 #include <llvm/IR/IRBuilder.h>
@@ -585,59 +586,26 @@ void CodeGenerator::VisitAssignExpr(AssignExpr &node)
 
 llvm::Type *CodeGenerator::MapType(const TypeRef &typeRef)
 {
-    llvm::Type *baseType = nullptr;
+    using TypeGetter = llvm::Type *(*)(llvm::LLVMContext &);
+
+    static const std::unordered_map<std::string, TypeGetter> typeMap = {
+        {"i8", llvm::Type::getInt8Ty},     {"u8", llvm::Type::getInt8Ty},   {"char", llvm::Type::getInt8Ty},
+        {"i16", llvm::Type::getInt16Ty},   {"u16", llvm::Type::getInt16Ty}, {"i32", llvm::Type::getInt32Ty},
+        {"int32", llvm::Type::getInt32Ty}, {"u32", llvm::Type::getInt32Ty}, {"i64", llvm::Type::getInt64Ty},
+        {"u64", llvm::Type::getInt64Ty},   {"f32", llvm::Type::getFloatTy}, {"f64", llvm::Type::getDoubleTy},
+        {"bool", llvm::Type::getInt1Ty},
+    };
 
     if (typeRef.name == "void")
     {
         return llvm::Type::getVoidTy(m_Context);
     }
-    else if (typeRef.name == "i8")
+
+    llvm::Type *baseType = nullptr;
+    auto it = typeMap.find(typeRef.name);
+    if (it != typeMap.end())
     {
-        baseType = llvm::Type::getInt8Ty(m_Context);
-    }
-    else if (typeRef.name == "i16")
-    {
-        baseType = llvm::Type::getInt16Ty(m_Context);
-    }
-    else if (typeRef.name == "i32" || typeRef.name == "int32")
-    {
-        baseType = llvm::Type::getInt32Ty(m_Context);
-    }
-    else if (typeRef.name == "i64")
-    {
-        baseType = llvm::Type::getInt64Ty(m_Context);
-    }
-    else if (typeRef.name == "u8")
-    {
-        baseType = llvm::Type::getInt8Ty(m_Context);
-    }
-    else if (typeRef.name == "u16")
-    {
-        baseType = llvm::Type::getInt16Ty(m_Context);
-    }
-    else if (typeRef.name == "u32")
-    {
-        baseType = llvm::Type::getInt32Ty(m_Context);
-    }
-    else if (typeRef.name == "u64")
-    {
-        baseType = llvm::Type::getInt64Ty(m_Context);
-    }
-    else if (typeRef.name == "f32")
-    {
-        baseType = llvm::Type::getFloatTy(m_Context);
-    }
-    else if (typeRef.name == "f64")
-    {
-        baseType = llvm::Type::getDoubleTy(m_Context);
-    }
-    else if (typeRef.name == "bool")
-    {
-        baseType = llvm::Type::getInt1Ty(m_Context);
-    }
-    else if (typeRef.name == "char")
-    {
-        baseType = llvm::Type::getInt8Ty(m_Context);
+        baseType = it->second(m_Context);
     }
     else
     {
