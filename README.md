@@ -221,6 +221,105 @@ if (p != null && p.value > 0) {
 }
 ```
 
+#### Non-short-circuit operators: `and` / `or`
+
+jlang also provides `and` and `or` keyword operators that work like `&&` and `||` but **always evaluate both operands**:
+
+```rust
+if (a and b) {
+    printf("both are true");
+}
+
+if (a or b) {
+    printf("at least one is true");
+}
+```
+
+<h6><i>Unlike `&&` and `||`, both sides are always evaluated regardless of the left operand's value.</i></h6>
+
+This is useful when both operands have side effects that must always execute:
+
+```rust
+// Both validate() and prepare() are ALWAYS called
+if (validate() and prepare()) {
+    printf("ready to proceed");
+}
+
+// Both logAttempt() and checkPermission() are ALWAYS called
+if (logAttempt() or checkPermission()) {
+    printf("action recorded or permitted");
+}
+```
+
+| Operator | Short-circuit | Use case |
+|----------|---------------|----------|
+| `&&` | Yes | Guard clauses, null checks |
+| `\|\|` | Yes | Default values, fallbacks |
+| `and` | No | When both sides must execute |
+| `or` | No | When both sides must execute |
+
+<details>
+<summary><b>LLVM IR comparison</b></summary>
+
+Given this jlang code:
+
+```rust
+if (a && b) { ... }
+if (a and b) { ... }
+```
+
+**Short-circuit `&&`** generates conditional branching:
+
+```llvm
+  %a1 = load i1, ptr %a              ; load left operand
+  br i1 %a1, label %and.rhs, label %and.merge  ; if false, skip right side
+
+and.rhs:
+  %b2 = load i1, ptr %b              ; load right operand (only if left was true)
+  br label %and.merge
+
+and.merge:
+  %and.result = phi i1 [ false, %entry ], [ %b2, %and.rhs ]  ; merge results
+```
+
+<h6><i>The `phi` node selects `false` if we came from entry (left was false), or `%b2` if we evaluated the right side. The right operand is only loaded when the left is true.</i></h6>
+
+**Non-short-circuit `and`** evaluates both operands unconditionally:
+
+```llvm
+  %a1 = load i1, ptr %a              ; load left operand
+  %b2 = load i1, ptr %b              ; load right operand (always)
+  %and.result = and i1 %a1, %b2      ; simple bitwise AND
+```
+
+<h6><i>Both operands are always loaded and combined with a single `and` instruction. No branching, no phi nodes - just straight-line code.</i></h6>
+
+The same pattern applies to `||` vs `or`:
+
+**Short-circuit `||`:**
+```llvm
+  %a1 = load i1, ptr %a
+  br i1 %a1, label %or.merge, label %or.rhs  ; if true, skip right side
+
+or.rhs:
+  %b2 = load i1, ptr %b              ; only evaluated if left was false
+  br label %or.merge
+
+or.merge:
+  %or.result = phi i1 [ true, %entry ], [ %b2, %or.rhs ]
+```
+
+**Non-short-circuit `or`:**
+```llvm
+  %a1 = load i1, ptr %a
+  %b2 = load i1, ptr %b              ; always evaluated
+  %or.result = or i1 %a1, %b2
+```
+
+</details>
+
+<h6><i>Most languages (C, C++, Java, Rust, Go) only provide short-circuit operators. jlang gives you both options - use `&&`/`||` when you want to skip evaluation, use `and`/`or` when both sides must run.</i></h6>
+
 ### Memory: manual management
 
 ```rust

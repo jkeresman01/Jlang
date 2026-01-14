@@ -547,7 +547,7 @@ std::shared_ptr<AstNode> Parser::ParseLogicalOr()
 {
     auto left = ParseLogicalAnd();
 
-    while (Check(TokenType::Or))
+    while (Check(TokenType::Or) || Check(TokenType::OrKeyword))
     {
         std::string op = Peek().m_lexeme;
         Advance();
@@ -567,7 +567,7 @@ std::shared_ptr<AstNode> Parser::ParseLogicalAnd()
 {
     auto left = ParseEquality();
 
-    while (Check(TokenType::And))
+    while (Check(TokenType::And) || Check(TokenType::AndKeyword))
     {
         std::string op = Peek().m_lexeme;
         Advance();

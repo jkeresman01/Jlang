@@ -37,6 +37,9 @@ static std::unordered_map<std::string, TokenType> s_Keywords = {
     {"false", TokenType::False},
     // Memory
     {"alloc", TokenType::Alloc},
+    // Logical operators (non-short-circuit)
+    {"and", TokenType::AndKeyword},
+    {"or", TokenType::OrKeyword},
 };
 
 Scanner::Scanner(const std::string &source) : m_Source(source) {}

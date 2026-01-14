@@ -410,6 +410,44 @@ void CodeGenerator::VisitBinaryExpr(BinaryExpr &node)
 
         m_LastValue = phi;
     }
+    else if (node.op == "and")
+    {
+        // Non-short-circuit AND: both operands are always evaluated
+        llvm::Value *leftBool = leftVal;
+        if (!leftVal->getType()->isIntegerTy(1))
+        {
+            leftBool =
+                m_IRBuilder.CreateICmpNE(leftVal, llvm::ConstantInt::get(leftVal->getType(), 0), "tobool");
+        }
+
+        llvm::Value *rightBool = rightVal;
+        if (!rightVal->getType()->isIntegerTy(1))
+        {
+            rightBool =
+                m_IRBuilder.CreateICmpNE(rightVal, llvm::ConstantInt::get(rightVal->getType(), 0), "tobool");
+        }
+
+        m_LastValue = m_IRBuilder.CreateAnd(leftBool, rightBool, "and.result");
+    }
+    else if (node.op == "or")
+    {
+        // Non-short-circuit OR: both operands are always evaluated
+        llvm::Value *leftBool = leftVal;
+        if (!leftVal->getType()->isIntegerTy(1))
+        {
+            leftBool =
+                m_IRBuilder.CreateICmpNE(leftVal, llvm::ConstantInt::get(leftVal->getType(), 0), "tobool");
+        }
+
+        llvm::Value *rightBool = rightVal;
+        if (!rightVal->getType()->isIntegerTy(1))
+        {
+            rightBool =
+                m_IRBuilder.CreateICmpNE(rightVal, llvm::ConstantInt::get(rightVal->getType(), 0), "tobool");
+        }
+
+        m_LastValue = m_IRBuilder.CreateOr(leftBool, rightBool, "or.result");
+    }
     else
     {
         JLANG_ERROR(STR("Unknown binary operator: %s", node.op.c_str()));
