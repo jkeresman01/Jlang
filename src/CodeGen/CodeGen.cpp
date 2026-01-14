@@ -589,19 +589,19 @@ llvm::Type *CodeGenerator::MapType(const TypeRef &typeRef)
     using TypeGetter = llvm::Type *(*)(llvm::LLVMContext &);
 
     static const std::unordered_map<std::string, TypeGetter> typeMap = {
-        {"i8", static_cast<TypeGetter>(llvm::Type::getInt8Ty)},
-        {"u8", static_cast<TypeGetter>(llvm::Type::getInt8Ty)},
-        {"char", static_cast<TypeGetter>(llvm::Type::getInt8Ty)},
-        {"i16", static_cast<TypeGetter>(llvm::Type::getInt16Ty)},
-        {"u16", static_cast<TypeGetter>(llvm::Type::getInt16Ty)},
-        {"i32", static_cast<TypeGetter>(llvm::Type::getInt32Ty)},
-        {"int32", static_cast<TypeGetter>(llvm::Type::getInt32Ty)},
-        {"u32", static_cast<TypeGetter>(llvm::Type::getInt32Ty)},
-        {"i64", static_cast<TypeGetter>(llvm::Type::getInt64Ty)},
-        {"u64", static_cast<TypeGetter>(llvm::Type::getInt64Ty)},
-        {"f32", static_cast<TypeGetter>(llvm::Type::getFloatTy)},
-        {"f64", static_cast<TypeGetter>(llvm::Type::getDoubleTy)},
-        {"bool", static_cast<TypeGetter>(llvm::Type::getInt1Ty)},
+        {"i8", +[](llvm::LLVMContext &ctx) -> llvm::Type * { return llvm::Type::getInt8Ty(ctx); }},
+        {"u8", +[](llvm::LLVMContext &ctx) -> llvm::Type * { return llvm::Type::getInt8Ty(ctx); }},
+        {"char", +[](llvm::LLVMContext &ctx) -> llvm::Type * { return llvm::Type::getInt8Ty(ctx); }},
+        {"i16", +[](llvm::LLVMContext &ctx) -> llvm::Type * { return llvm::Type::getInt16Ty(ctx); }},
+        {"u16", +[](llvm::LLVMContext &ctx) -> llvm::Type * { return llvm::Type::getInt16Ty(ctx); }},
+        {"i32", +[](llvm::LLVMContext &ctx) -> llvm::Type * { return llvm::Type::getInt32Ty(ctx); }},
+        {"int32", +[](llvm::LLVMContext &ctx) -> llvm::Type * { return llvm::Type::getInt32Ty(ctx); }},
+        {"u32", +[](llvm::LLVMContext &ctx) -> llvm::Type * { return llvm::Type::getInt32Ty(ctx); }},
+        {"i64", +[](llvm::LLVMContext &ctx) -> llvm::Type * { return llvm::Type::getInt64Ty(ctx); }},
+        {"u64", +[](llvm::LLVMContext &ctx) -> llvm::Type * { return llvm::Type::getInt64Ty(ctx); }},
+        {"f32", +[](llvm::LLVMContext &ctx) -> llvm::Type * { return llvm::Type::getFloatTy(ctx); }},
+        {"f64", +[](llvm::LLVMContext &ctx) -> llvm::Type * { return llvm::Type::getDoubleTy(ctx); }},
+        {"bool", +[](llvm::LLVMContext &ctx) -> llvm::Type * { return llvm::Type::getInt1Ty(ctx); }},
     };
 
     if (typeRef.name == "void")
