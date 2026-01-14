@@ -589,11 +589,19 @@ llvm::Type *CodeGenerator::MapType(const TypeRef &typeRef)
     using TypeGetter = llvm::Type *(*)(llvm::LLVMContext &);
 
     static const std::unordered_map<std::string, TypeGetter> typeMap = {
-        {"i8", llvm::Type::getInt8Ty},     {"u8", llvm::Type::getInt8Ty},   {"char", llvm::Type::getInt8Ty},
-        {"i16", llvm::Type::getInt16Ty},   {"u16", llvm::Type::getInt16Ty}, {"i32", llvm::Type::getInt32Ty},
-        {"int32", llvm::Type::getInt32Ty}, {"u32", llvm::Type::getInt32Ty}, {"i64", llvm::Type::getInt64Ty},
-        {"u64", llvm::Type::getInt64Ty},   {"f32", llvm::Type::getFloatTy}, {"f64", llvm::Type::getDoubleTy},
-        {"bool", llvm::Type::getInt1Ty},
+        {"i8", static_cast<TypeGetter>(llvm::Type::getInt8Ty)},
+        {"u8", static_cast<TypeGetter>(llvm::Type::getInt8Ty)},
+        {"char", static_cast<TypeGetter>(llvm::Type::getInt8Ty)},
+        {"i16", static_cast<TypeGetter>(llvm::Type::getInt16Ty)},
+        {"u16", static_cast<TypeGetter>(llvm::Type::getInt16Ty)},
+        {"i32", static_cast<TypeGetter>(llvm::Type::getInt32Ty)},
+        {"int32", static_cast<TypeGetter>(llvm::Type::getInt32Ty)},
+        {"u32", static_cast<TypeGetter>(llvm::Type::getInt32Ty)},
+        {"i64", static_cast<TypeGetter>(llvm::Type::getInt64Ty)},
+        {"u64", static_cast<TypeGetter>(llvm::Type::getInt64Ty)},
+        {"f32", static_cast<TypeGetter>(llvm::Type::getFloatTy)},
+        {"f64", static_cast<TypeGetter>(llvm::Type::getDoubleTy)},
+        {"bool", static_cast<TypeGetter>(llvm::Type::getInt1Ty)},
     };
 
     if (typeRef.name == "void")
