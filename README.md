@@ -50,16 +50,6 @@ fn main() -> i32 {
 
 <h6><i>jlang's syntax is designed to be clean, explicit, and familiar to developers coming from C, Go, or Rust.</i></h6>
 
-#### Functions: `fn` keyword with trailing return type
-
-```rust
-fn add(a: i32, b: i32) -> i32 {
-    return a + b;
-}
-```
-
-<h6><i>The `fn` keyword is concise and widely recognized. Trailing return types (using `->`) improve readability, especially for longer parameter lists.</i></h6>
-
 #### Variables: `var` with colon-separated types
 
 ```rust
@@ -334,6 +324,16 @@ free(p);
 
 > [!IMPORTANT]
 > You are responsible for freeing all allocated memory. Forgetting to call `free()` will cause memory leaks.
+
+#### Functions: `fn` keyword with trailing return type
+
+```rust
+fn add(a: i32, b: i32) -> i32 {
+    return a + b;
+}
+```
+
+<h6><i>The `fn` keyword is concise and widely recognized. Trailing return types (using `->`) improve readability, especially for longer parameter lists.</i></h6>
 
 ## Getting started
 
