@@ -145,6 +145,9 @@ void Scanner::ScanToken()
     case '"':
         AddStringLiteral();
         break;
+    case '\'':
+        AddCharLiteral();
+        break;
     default:
         if (std::isdigit(c))
         {
@@ -193,6 +196,15 @@ char Scanner::Peek() const
     return IsEndReached() ? '\0' : m_Source[m_CurrentPosition];
 }
 
+char Scanner::PeekNext() const
+{
+    if (m_CurrentPosition + 1 >= m_Source.length())
+    {
+        return '\0';
+    }
+    return m_Source[m_CurrentPosition + 1];
+}
+
 bool Scanner::IsMatched(char expected)
 {
     if (IsEndReached() || m_Source[m_CurrentPosition] != expected)
@@ -239,7 +251,24 @@ void Scanner::AddNumber()
         Advance();
     }
 
-    AddToken(TokenType::NumberLiteral);
+    // Check for decimal point (float literal)
+    if (Peek() == '.' && std::isdigit(PeekNext()))
+    {
+        // Consume the '.'
+        Advance();
+
+        // Consume the fractional part
+        while (std::isdigit(Peek()))
+        {
+            Advance();
+        }
+
+        AddToken(TokenType::FloatLiteral);
+    }
+    else
+    {
+        AddToken(TokenType::NumberLiteral);
+    }
 }
 
 void Scanner::AddStringLiteral()
@@ -264,6 +293,60 @@ void Scanner::AddStringLiteral()
     std::string value = m_Source.substr(m_Start + 1, m_CurrentPosition - m_Start - 2);
 
     AddToken(TokenType::StringLiteral, value);
+}
+
+void Scanner::AddCharLiteral()
+{
+    // Current position is after the opening '
+    if (IsEndReached())
+    {
+        AddToken(TokenType::Unknown);
+        return;
+    }
+
+    char c = Advance();
+
+    // Handle escape sequences
+    if (c == '\\' && !IsEndReached())
+    {
+        char escaped = Advance();
+        switch (escaped)
+        {
+        case 'n':
+            c = '\n';
+            break;
+        case 't':
+            c = '\t';
+            break;
+        case 'r':
+            c = '\r';
+            break;
+        case '\\':
+            c = '\\';
+            break;
+        case '\'':
+            c = '\'';
+            break;
+        case '0':
+            c = '\0';
+            break;
+        default:
+            // Unknown escape, just use the character as-is
+            c = escaped;
+            break;
+        }
+    }
+
+    if (IsEndReached() || Peek() != '\'')
+    {
+        AddToken(TokenType::Unknown);
+        return;
+    }
+
+    Advance(); // consume closing '
+
+    // Store the character value as a string
+    AddToken(TokenType::CharLiteral, std::string(1, c));
 }
 
 TokenType Scanner::IsKeywordOrIdentifier(const std::string &text)

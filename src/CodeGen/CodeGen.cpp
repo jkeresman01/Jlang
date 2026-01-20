@@ -500,11 +500,34 @@ void CodeGenerator::VisitLiteralExpr(LiteralExpr &node)
     }
     else if (node.value.front() == '"' && node.value.back() == '"')
     {
+        // String literal
         std::string strValue = node.value.substr(1, node.value.size() - 2);
         m_LastValue = m_IRBuilder.CreateGlobalStringPtr(strValue, "str");
     }
+    else if (node.value.front() == '\'' && node.value.back() == '\'')
+    {
+        // Character literal - extract the character and create an i8 constant
+        char charValue = node.value[1];
+        m_LastValue =
+            llvm::ConstantInt::get(llvm::Type::getInt8Ty(m_Context), static_cast<uint8_t>(charValue));
+    }
+    else if (node.value.find('.') != std::string::npos)
+    {
+        // Float literal
+        try
+        {
+            double floatValue = std::stod(node.value);
+            // Default to f64 (double) for now
+            m_LastValue = llvm::ConstantFP::get(llvm::Type::getDoubleTy(m_Context), floatValue);
+        }
+        catch (...)
+        {
+            JLANG_ERROR(STR("Invalid float literal: %s", node.value.c_str()));
+        }
+    }
     else
     {
+        // Integer literal
         try
         {
             int64_t intValue = std::stoll(node.value);

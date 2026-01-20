@@ -870,6 +870,23 @@ std::shared_ptr<AstNode> Parser::ParsePrimary()
         return expression;
     }
 
+    // Handle float literals
+    if (IsMatched(TokenType::FloatLiteral))
+    {
+        auto expression = std::make_shared<LiteralExpr>();
+        expression->value = Previous().m_lexeme;
+        return expression;
+    }
+
+    // Handle character literals
+    if (IsMatched(TokenType::CharLiteral))
+    {
+        auto expression = std::make_shared<LiteralExpr>();
+        // Wrap in single quotes to distinguish from other literals in codegen
+        expression->value = "'" + Previous().m_lexeme + "'";
+        return expression;
+    }
+
     JLANG_ERROR("Expected expression");
     return nullptr;
 }

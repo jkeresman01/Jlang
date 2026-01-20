@@ -63,6 +63,8 @@ enum class TokenType
     Identifier,
     StringLiteral,
     NumberLiteral,
+    FloatLiteral,
+    CharLiteral,
 
     EndOfFile,
     Unknown

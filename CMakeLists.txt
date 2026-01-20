@@ -42,3 +42,35 @@ llvm_map_components_to_libnames(LLVM_LIBS
 )
 
 target_link_libraries(Jlang PRIVATE ${LLVM_LIBS} ZLIB::ZLIB)
+
+# =============================================================================
+# Tests
+# =============================================================================
+option(BUILD_TESTS "Build tests" ON)
+
+if(BUILD_TESTS)
+    include(FetchContent)
+    FetchContent_Declare(
+        googletest
+        URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
+    )
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+    FetchContent_MakeAvailable(googletest)
+
+    enable_testing()
+
+    # Scanner tests
+    add_executable(ScannerTests
+        tests/ScannerTests.cpp
+        src/Scanner/Scanner.cpp
+    )
+
+    target_include_directories(ScannerTests PRIVATE
+        ${CMAKE_SOURCE_DIR}/src
+    )
+
+    target_link_libraries(ScannerTests PRIVATE GTest::gtest_main)
+
+    include(GoogleTest)
+    gtest_discover_tests(ScannerTests)
+endif()

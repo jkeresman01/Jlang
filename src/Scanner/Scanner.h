@@ -21,6 +21,7 @@ class Scanner
     char Advance();
 
     char Peek() const;
+    char PeekNext() const;
 
     bool IsMatched(char expected);
     bool IsEndReached() const;
@@ -31,6 +32,7 @@ class Scanner
     void AddIdentifier();
     void AddNumber();
     void AddStringLiteral();
+    void AddCharLiteral();
 
     void SkipWhitespace();
 

@@ -66,43 +66,39 @@ var isEmpty: bool = false;
 
 <h6><i>The colon syntax (`name: Type`) clearly separates identifiers from types and is consistent with modern languages like TypeScript, Kotlin, and Rust.</i></h6>
 
-#### Planned: Integer sizes
+#### Integer sizes (supported)
 
 ```rust
 var a: i8 = 127;
 var b: i16 = 32767;
-var c: i64 = 9223372036854775807;
+var c: i32 = 42;
+var d: i64 = 9223372036854775807;
 
-var d: u8 = 255;
-var e: u16 = 65535;
-var f: u32 = 100;
-var g: u64 = 18446744073709551615;
+var e: u8 = 255;
+var f: u16 = 65535;
+var g: u32 = 100;
+var h: u64 = 18446744073709551615;
 ```
 
-> [!NOTE]
-> Planned:
-> Type keywords are recognized but literals are always treated as `i32`. Needs code generator to infer literal type from variable declaration.
+<h6><i>All integer types (i8, i16, i32, i64, u8, u16, u32, u64) are supported. The variable's declared type determines the storage size. Integer literals are parsed as i32 by default.</i></h6>
 
-#### Planned: Floating point
+#### Floating point (supported)
 
 ```rust
 var pi: f32 = 3.14;
 var precise: f64 = 3.141592653589793;
 ```
 
-> [!NOTE]
-> Planned:
-> Type keywords are recognized but float literals are not parsed. Needs decimal point handling in lexer and float literal code generation.
+<h6><i>Float literals are parsed and generate LLVM double constants. Both f32 and f64 type keywords are supported.</i></h6>
 
-#### Planned: Character literals
+#### Character literals (supported)
 
 ```rust
 var letter: char = 'A';
+var newline: char = '\n';
 ```
 
-> [!NOTE]
-> Planned:
-> The `char` type is recognized but character literals are not parsed. Needs single-quote character literal handling in lexer.
+<h6><i>Character literals use single quotes and support escape sequences (`\n`, `\t`, `\r`, `\\`, `\'`, `\0`). Characters are stored as i8 values.</i></h6>
 
 #### Control Flow: C-style if/else and while
 
@@ -334,6 +330,28 @@ fn add(a: i32, b: i32) -> i32 {
 ```
 
 <h6><i>The `fn` keyword is concise and widely recognized. Trailing return types (using `->`) improve readability, especially for longer parameter lists.</i></h6>
+
+### Type Reference
+
+| Type | Description | Size | Range/Values |
+|------|-------------|------|--------------|
+| `i8` | Signed 8-bit integer | 1 byte | -128 to 127 |
+| `i16` | Signed 16-bit integer | 2 bytes | -32,768 to 32,767 |
+| `i32` | Signed 32-bit integer | 4 bytes | -2³¹ to 2³¹-1 |
+| `i64` | Signed 64-bit integer | 8 bytes | -2⁶³ to 2⁶³-1 |
+| `u8` | Unsigned 8-bit integer | 1 byte | 0 to 255 |
+| `u16` | Unsigned 16-bit integer | 2 bytes | 0 to 65,535 |
+| `u32` | Unsigned 32-bit integer | 4 bytes | 0 to 2³²-1 |
+| `u64` | Unsigned 64-bit integer | 8 bytes | 0 to 2⁶⁴-1 |
+| `f32` | Single-precision float | 4 bytes | ±3.4×10³⁸ |
+| `f64` | Double-precision float | 8 bytes | ±1.8×10³⁰⁸ |
+| `bool` | Boolean | 1 bit | `true` or `false` |
+| `char` | Character | 1 byte | ASCII 0-255 |
+| `char*` | String (char pointer) | 8 bytes | Memory address |
+| `void` | No value | - | Functions only |
+| `T*` | Pointer to type T | 8 bytes | Memory address |
+
+<h6><i>See `samples/types.j` for a complete working example of all types.</i></h6>
 
 ## Getting started
 
