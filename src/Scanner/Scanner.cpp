@@ -179,6 +179,41 @@ void Scanner::SkipWhitespace()
             m_CurrentLine++;
             Advance();
         }
+        else if (c == '/')
+        {
+            if (PeekNext() == '/')
+            {
+                // Single-line comment: skip until end of line
+                while (Peek() != '\n' && !IsEndReached())
+                {
+                    Advance();
+                }
+            }
+            else if (PeekNext() == '*')
+            {
+                // Block comment: skip until */
+                Advance(); // consume '/'
+                Advance(); // consume '*'
+                while (!IsEndReached())
+                {
+                    if (Peek() == '*' && PeekNext() == '/')
+                    {
+                        Advance(); // consume '*'
+                        Advance(); // consume '/'
+                        break;
+                    }
+                    if (Peek() == '\n')
+                    {
+                        m_CurrentLine++;
+                    }
+                    Advance();
+                }
+            }
+            else
+            {
+                break; // It's a division operator, not a comment
+            }
+        }
         else
         {
             break;

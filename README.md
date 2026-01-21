@@ -100,6 +100,19 @@ var newline: char = '\n';
 
 <h6><i>Character literals use single quotes and support escape sequences (`\n`, `\t`, `\r`, `\\`, `\'`, `\0`). Characters are stored as i8 values.</i></h6>
 
+#### Comments
+
+```rust
+// Single-line comment
+
+/* Multi-line
+   block comment */
+
+var x: i32 = 42; // inline comment
+```
+
+<h6><i>jlang supports C-style single-line (`//`) and block (`/* */`) comments. Block comments can span multiple lines.</i></h6>
+
 #### Control Flow: C-style if/else and while
 
 ```rust
