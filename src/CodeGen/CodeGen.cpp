@@ -264,6 +264,128 @@ void CodeGenerator::VisitCallExpr(CallExpr &node)
 
 void CodeGenerator::VisitBinaryExpr(BinaryExpr &node)
 {
+    // Handle short-circuit operators separately - they must not evaluate RHS eagerly
+    if (node.op == "&&")
+    {
+        // Short-circuit AND: if left is false, result is false; otherwise evaluate right
+        node.left->Accept(*this);
+        llvm::Value *leftVal = m_LastValue;
+
+        if (!leftVal)
+        {
+            JLANG_ERROR("Invalid left operand in && expression");
+            return;
+        }
+
+        llvm::Function *parentFunction = m_IRBuilder.GetInsertBlock()->getParent();
+
+        llvm::BasicBlock *rhsBlock = llvm::BasicBlock::Create(m_Context, "and.rhs", parentFunction);
+        llvm::BasicBlock *mergeBlock = llvm::BasicBlock::Create(m_Context, "and.merge");
+
+        // Convert left to i1 if needed
+        llvm::Value *leftBool = leftVal;
+        if (!leftVal->getType()->isIntegerTy(1))
+        {
+            leftBool =
+                m_IRBuilder.CreateICmpNE(leftVal, llvm::ConstantInt::get(leftVal->getType(), 0), "tobool");
+        }
+
+        llvm::BasicBlock *entryBlock = m_IRBuilder.GetInsertBlock();
+        m_IRBuilder.CreateCondBr(leftBool, rhsBlock, mergeBlock);
+
+        // RHS block - only now evaluate the right operand
+        m_IRBuilder.SetInsertPoint(rhsBlock);
+        node.right->Accept(*this);
+        llvm::Value *rightVal = m_LastValue;
+
+        if (!rightVal)
+        {
+            JLANG_ERROR("Invalid right operand in && expression");
+            return;
+        }
+
+        llvm::Value *rightBool = rightVal;
+        if (!rightVal->getType()->isIntegerTy(1))
+        {
+            rightBool =
+                m_IRBuilder.CreateICmpNE(rightVal, llvm::ConstantInt::get(rightVal->getType(), 0), "tobool");
+        }
+        llvm::BasicBlock *rhsEndBlock = m_IRBuilder.GetInsertBlock();
+        m_IRBuilder.CreateBr(mergeBlock);
+
+        // Merge block
+        mergeBlock->insertInto(parentFunction);
+        m_IRBuilder.SetInsertPoint(mergeBlock);
+
+        llvm::PHINode *phi = m_IRBuilder.CreatePHI(llvm::Type::getInt1Ty(m_Context), 2, "and.result");
+        phi->addIncoming(llvm::ConstantInt::get(llvm::Type::getInt1Ty(m_Context), 0), entryBlock);
+        phi->addIncoming(rightBool, rhsEndBlock);
+
+        m_LastValue = phi;
+        return;
+    }
+
+    if (node.op == "||")
+    {
+        // Short-circuit OR: if left is true, result is true; otherwise evaluate right
+        node.left->Accept(*this);
+        llvm::Value *leftVal = m_LastValue;
+
+        if (!leftVal)
+        {
+            JLANG_ERROR("Invalid left operand in || expression");
+            return;
+        }
+
+        llvm::Function *parentFunction = m_IRBuilder.GetInsertBlock()->getParent();
+
+        llvm::BasicBlock *rhsBlock = llvm::BasicBlock::Create(m_Context, "or.rhs", parentFunction);
+        llvm::BasicBlock *mergeBlock = llvm::BasicBlock::Create(m_Context, "or.merge");
+
+        // Convert left to i1 if needed
+        llvm::Value *leftBool = leftVal;
+        if (!leftVal->getType()->isIntegerTy(1))
+        {
+            leftBool =
+                m_IRBuilder.CreateICmpNE(leftVal, llvm::ConstantInt::get(leftVal->getType(), 0), "tobool");
+        }
+
+        llvm::BasicBlock *entryBlock = m_IRBuilder.GetInsertBlock();
+        m_IRBuilder.CreateCondBr(leftBool, mergeBlock, rhsBlock);
+
+        // RHS block - only now evaluate the right operand
+        m_IRBuilder.SetInsertPoint(rhsBlock);
+        node.right->Accept(*this);
+        llvm::Value *rightVal = m_LastValue;
+
+        if (!rightVal)
+        {
+            JLANG_ERROR("Invalid right operand in || expression");
+            return;
+        }
+
+        llvm::Value *rightBool = rightVal;
+        if (!rightVal->getType()->isIntegerTy(1))
+        {
+            rightBool =
+                m_IRBuilder.CreateICmpNE(rightVal, llvm::ConstantInt::get(rightVal->getType(), 0), "tobool");
+        }
+        llvm::BasicBlock *rhsEndBlock = m_IRBuilder.GetInsertBlock();
+        m_IRBuilder.CreateBr(mergeBlock);
+
+        // Merge block
+        mergeBlock->insertInto(parentFunction);
+        m_IRBuilder.SetInsertPoint(mergeBlock);
+
+        llvm::PHINode *phi = m_IRBuilder.CreatePHI(llvm::Type::getInt1Ty(m_Context), 2, "or.result");
+        phi->addIncoming(llvm::ConstantInt::get(llvm::Type::getInt1Ty(m_Context), 1), entryBlock);
+        phi->addIncoming(rightBool, rhsEndBlock);
+
+        m_LastValue = phi;
+        return;
+    }
+
+    // All other binary operators evaluate both sides
     node.left->Accept(*this);
     llvm::Value *leftVal = m_LastValue;
 
@@ -329,86 +451,6 @@ void CodeGenerator::VisitBinaryExpr(BinaryExpr &node)
     else if (node.op == "/")
     {
         m_LastValue = m_IRBuilder.CreateSDiv(leftVal, rightVal, "div");
-    }
-    else if (node.op == "&&")
-    {
-        // Short-circuit AND: if left is false, result is false; otherwise evaluate right
-        llvm::Function *parentFunction = m_IRBuilder.GetInsertBlock()->getParent();
-
-        llvm::BasicBlock *rhsBlock = llvm::BasicBlock::Create(m_Context, "and.rhs", parentFunction);
-        llvm::BasicBlock *mergeBlock = llvm::BasicBlock::Create(m_Context, "and.merge");
-
-        // Convert left to i1 if needed
-        llvm::Value *leftBool = leftVal;
-        if (!leftVal->getType()->isIntegerTy(1))
-        {
-            leftBool =
-                m_IRBuilder.CreateICmpNE(leftVal, llvm::ConstantInt::get(leftVal->getType(), 0), "tobool");
-        }
-
-        llvm::BasicBlock *entryBlock = m_IRBuilder.GetInsertBlock();
-        m_IRBuilder.CreateCondBr(leftBool, rhsBlock, mergeBlock);
-
-        // RHS block
-        m_IRBuilder.SetInsertPoint(rhsBlock);
-        llvm::Value *rightBool = rightVal;
-        if (!rightVal->getType()->isIntegerTy(1))
-        {
-            rightBool =
-                m_IRBuilder.CreateICmpNE(rightVal, llvm::ConstantInt::get(rightVal->getType(), 0), "tobool");
-        }
-        llvm::BasicBlock *rhsEndBlock = m_IRBuilder.GetInsertBlock();
-        m_IRBuilder.CreateBr(mergeBlock);
-
-        // Merge block
-        mergeBlock->insertInto(parentFunction);
-        m_IRBuilder.SetInsertPoint(mergeBlock);
-
-        llvm::PHINode *phi = m_IRBuilder.CreatePHI(llvm::Type::getInt1Ty(m_Context), 2, "and.result");
-        phi->addIncoming(llvm::ConstantInt::get(llvm::Type::getInt1Ty(m_Context), 0), entryBlock);
-        phi->addIncoming(rightBool, rhsEndBlock);
-
-        m_LastValue = phi;
-    }
-    else if (node.op == "||")
-    {
-        // Short-circuit OR: if left is true, result is true; otherwise evaluate right
-        llvm::Function *parentFunction = m_IRBuilder.GetInsertBlock()->getParent();
-
-        llvm::BasicBlock *rhsBlock = llvm::BasicBlock::Create(m_Context, "or.rhs", parentFunction);
-        llvm::BasicBlock *mergeBlock = llvm::BasicBlock::Create(m_Context, "or.merge");
-
-        // Convert left to i1 if needed
-        llvm::Value *leftBool = leftVal;
-        if (!leftVal->getType()->isIntegerTy(1))
-        {
-            leftBool =
-                m_IRBuilder.CreateICmpNE(leftVal, llvm::ConstantInt::get(leftVal->getType(), 0), "tobool");
-        }
-
-        llvm::BasicBlock *entryBlock = m_IRBuilder.GetInsertBlock();
-        m_IRBuilder.CreateCondBr(leftBool, mergeBlock, rhsBlock);
-
-        // RHS block
-        m_IRBuilder.SetInsertPoint(rhsBlock);
-        llvm::Value *rightBool = rightVal;
-        if (!rightVal->getType()->isIntegerTy(1))
-        {
-            rightBool =
-                m_IRBuilder.CreateICmpNE(rightVal, llvm::ConstantInt::get(rightVal->getType(), 0), "tobool");
-        }
-        llvm::BasicBlock *rhsEndBlock = m_IRBuilder.GetInsertBlock();
-        m_IRBuilder.CreateBr(mergeBlock);
-
-        // Merge block
-        mergeBlock->insertInto(parentFunction);
-        m_IRBuilder.SetInsertPoint(mergeBlock);
-
-        llvm::PHINode *phi = m_IRBuilder.CreatePHI(llvm::Type::getInt1Ty(m_Context), 2, "or.result");
-        phi->addIncoming(llvm::ConstantInt::get(llvm::Type::getInt1Ty(m_Context), 1), entryBlock);
-        phi->addIncoming(rightBool, rhsEndBlock);
-
-        m_LastValue = phi;
     }
     else if (node.op == "and")
     {
