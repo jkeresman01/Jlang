@@ -4,6 +4,7 @@
   "words": [
     "struct",
     "ifcond",
+    "deallocation",
     "ptrcast",
     "GTEST",
     "pthread",
