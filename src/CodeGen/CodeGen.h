@@ -9,6 +9,7 @@
 
 #include <memory>
 #include <unordered_map>
+#include <unordered_set>
 
 #include <llvm/IR/Function.h>
 #include <llvm/IR/IRBuilder.h>
@@ -68,14 +69,24 @@ class CodeGenerator : public AstVisitor
         std::unordered_map<std::string, FieldInfo> fields;
     };
 
+    // Track variable usage for unused variable detection
+    struct VariableInfo
+    {
+        llvm::Value *value;
+        TypeRef type;
+        bool used = false;
+    };
+
+    void CheckUnusedVariables();
+
   private:
     llvm::LLVMContext m_Context;
     std::unique_ptr<llvm::Module> m_Module;
     llvm::IRBuilder<> m_IRBuilder;
 
-    std::unordered_map<std::string, llvm::Value *> m_namedValues;
-    std::unordered_map<std::string, TypeRef> m_variableTypes;  // Track variable types for member access
-    std::unordered_map<std::string, StructInfo> m_structTypes; // Track struct definitions
+    std::unordered_map<std::string, VariableInfo> m_variables;  // Track variables with usage info
+    std::unordered_map<std::string, StructInfo> m_structTypes;  // Track struct definitions
+    std::unordered_set<std::string> m_currentFunctionVariables; // Variables declared in current function
     llvm::Value *m_LastValue = nullptr;
 };
 

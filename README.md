@@ -66,6 +66,31 @@ var isEmpty: bool = false;
 
 <h6><i>The colon syntax (`name: Type`) clearly separates identifiers from types and is consistent with modern languages like TypeScript, Kotlin, and Rust.</i></h6>
 
+#### Unused variables are compile-time errors
+
+jlang enforces that all declared variables must be used. If you declare a variable but never read from it, the compiler will emit an error:
+
+```rust
+fn main() -> i32 {
+    var x: i32 = 10;
+    var y: i32 = 20;  // ERROR: unused variable 'y'
+    return x;
+}
+```
+
+This also applies to function parameters:
+
+```rust
+fn add(a: i32, b: i32) -> i32 {  // ERROR: unused parameter 'b'
+    return a;
+}
+```
+
+<h6><i>This strictness catches common bugs like typos in variable names, forgotten logic, or dead code. It follows the philosophy of Go and Rust where unused variables indicate a likely mistake.</i></h6>
+
+> [!TIP]
+> If you intentionally want to ignore a value, use a naming convention like `_unused` or refactor the code to not declare the variable at all.
+
 #### Integer sizes (supported)
 
 ```rust

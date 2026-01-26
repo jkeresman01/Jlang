@@ -61,6 +61,9 @@ void CodeGenerator::DumpIR()
 
 void CodeGenerator::VisitFunctionDecl(FunctionDecl &node)
 {
+    // Clear tracking for new function scope
+    m_currentFunctionVariables.clear();
+
     std::vector<llvm::Type *> paramTypes;
     paramTypes.reserve(node.params.size());
     std::transform(node.params.begin(), node.params.end(), std::back_inserter(paramTypes),
@@ -77,9 +80,10 @@ void CodeGenerator::VisitFunctionDecl(FunctionDecl &node)
     unsigned paramIndex = 0;
     for (auto &arg : function->args())
     {
-        arg.setName(node.params[paramIndex].name);
-        m_namedValues[node.params[paramIndex].name] = &arg;
-        m_variableTypes[node.params[paramIndex].name] = node.params[paramIndex].type;
+        const std::string &paramName = node.params[paramIndex].name;
+        arg.setName(paramName);
+        m_variables[paramName] = VariableInfo{&arg, node.params[paramIndex].type, false};
+        m_currentFunctionVariables.insert(paramName);
         ++paramIndex;
     }
 
@@ -88,12 +92,22 @@ void CodeGenerator::VisitFunctionDecl(FunctionDecl &node)
         node.body->Accept(*this);
     }
 
+    // Check for unused variables before finalizing the function
+    CheckUnusedVariables();
+
     if (node.returnType.name == "void")
     {
         m_IRBuilder.CreateRetVoid();
     }
 
     llvm::verifyFunction(*function);
+
+    // Clean up function-local variables
+    for (const auto &varName : m_currentFunctionVariables)
+    {
+        m_variables.erase(varName);
+    }
+    m_currentFunctionVariables.clear();
 }
 
 void CodeGenerator::VisitInterfaceDecl(InterfaceDecl &) {}
@@ -141,8 +155,9 @@ void CodeGenerator::VisitVariableDecl(VariableDecl &node)
         }
     }
 
-    m_namedValues[node.name] = alloca;
-    m_variableTypes[node.name] = node.varType; // Track the type for member access
+    // Track variable with usage info (initially unused)
+    m_variables[node.name] = VariableInfo{alloca, node.varType, false};
+    m_currentFunctionVariables.insert(node.name);
 }
 
 void CodeGenerator::VisitIfStatement(IfStatement &node)
@@ -607,15 +622,18 @@ void CodeGenerator::VisitLiteralExpr(LiteralExpr &node)
 
 void CodeGenerator::VisitVarExpr(VarExpr &node)
 {
-    auto it = m_namedValues.find(node.name);
+    auto it = m_variables.find(node.name);
 
-    if (it == m_namedValues.end())
+    if (it == m_variables.end())
     {
         JLANG_ERROR(STR("Undefined variable: %s", node.name.c_str()));
         return;
     }
 
-    llvm::Value *storedValue = it->second;
+    // Mark variable as used
+    it->second.used = true;
+
+    llvm::Value *storedValue = it->second.value;
 
     if (llvm::AllocaInst *alloca = llvm::dyn_cast<llvm::AllocaInst>(storedValue))
     {
@@ -707,14 +725,14 @@ void CodeGenerator::VisitAssignExpr(AssignExpr &node)
     }
 
     // Find the variable
-    auto it = m_namedValues.find(node.name);
-    if (it == m_namedValues.end())
+    auto it = m_variables.find(node.name);
+    if (it == m_variables.end())
     {
         JLANG_ERROR(STR("Undefined variable in assignment: %s", node.name.c_str()));
         return;
     }
 
-    llvm::Value *targetVar = it->second;
+    llvm::Value *targetVar = it->second.value;
 
     if (llvm::AllocaInst *alloca = llvm::dyn_cast<llvm::AllocaInst>(targetVar))
     {
@@ -746,10 +764,10 @@ void CodeGenerator::VisitMemberAccessExpr(MemberAccessExpr &node)
     // If the object is a VarExpr, look up its type
     if (auto *varExpr = dynamic_cast<VarExpr *>(node.object.get()))
     {
-        auto typeIt = m_variableTypes.find(varExpr->name);
-        if (typeIt != m_variableTypes.end())
+        auto typeIt = m_variables.find(varExpr->name);
+        if (typeIt != m_variables.end())
         {
-            structTypeName = typeIt->second.name;
+            structTypeName = typeIt->second.type.name;
         }
     }
 
@@ -797,6 +815,20 @@ void CodeGenerator::VisitMemberAccessExpr(MemberAccessExpr &node)
     // Load the field value
     llvm::Type *fieldType = MapType(fieldInfo.type);
     m_LastValue = m_IRBuilder.CreateLoad(fieldType, fieldPtr, node.memberName);
+}
+
+void CodeGenerator::CheckUnusedVariables()
+{
+    // TODO: make this a cool hard error that stops compilation (like Go)
+    // for now just complain a bit
+    for (const auto &varName : m_currentFunctionVariables)
+    {
+        auto it = m_variables.find(varName);
+        if (it != m_variables.end() && !it->second.used)
+        {
+            JLANG_ERROR(STR("Unused variable: %s", varName.c_str()));
+        }
+    }
 }
 
 llvm::Type *CodeGenerator::MapType(const TypeRef &typeRef)

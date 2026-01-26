@@ -1,4 +1,4 @@
 fn main() -> i32 {
     var x: i32 = 42;
-    return 0;
+    return x;
 }
