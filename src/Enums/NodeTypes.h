@@ -22,6 +22,7 @@ enum class NodeType
     LiteralExpr,
     CastExpr,
     AllocExpr,
-    AssignExpr
+    AssignExpr,
+    MemberAccessExpr
 };
 } // namespace jlang

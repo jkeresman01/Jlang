@@ -3,23 +3,23 @@ interface IPrintable {
 }
 
 struct Person : IPrintable {
-    firstName: char*;
-    age: i32;
+    Name: char*;    // Public - uppercase
+    Age: i32;       // Public - uppercase
 }
 
 fn print(self: Person*) {
-    printf("First name: %s", self.firstName);
-    printf("Age: %d", self.age);
+    printf("Name: %s", self.Name);
+    printf("Age: %d", self.Age);
 }
 
 struct Frog : IPrintable {
-    name: char*;
-    age: i32;
+    Name: char*;    // Public
+    Age: i32;       // Public
 }
 
 fn print(self: Frog*) {
-    printf("Frogs name: %s", self.name);
-    printf("Age: %d", self.age);
+    printf("Frog's name: %s", self.Name);
+    printf("Age: %d", self.Age);
 }
 
 fn main() -> i32 {

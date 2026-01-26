@@ -25,6 +25,7 @@ struct StructField
 {
     std::string name;
     TypeRef type;
+    bool isPublic = false; // lowercase = private, Uppercase = public
 };
 
 struct StructDecl : public AstNode

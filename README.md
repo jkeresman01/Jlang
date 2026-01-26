@@ -23,13 +23,13 @@ interface IPrintable {
 }
 
 struct Person : IPrintable {
-    firstName: char*;
-    age: i32;
+    Name: char*;    // Public - uppercase
+    Age: i32;       // Public - uppercase
 }
 
 fn print(self: Person*) {
-    printf("First name: %s", self.firstName);
-    printf("Age: %d", self.age);
+    printf("Name: %s", self.Name);
+    printf("Age: %d", self.Age);
 }
 
 fn main() -> i32 {
@@ -145,18 +145,49 @@ while (i < 10) {
 
 ```rust
 struct Person : IPrintable {
-    firstName: char*;
+    Name: char*;
     age: i32;
 }
 ```
 
 <h6><i>Using `:` for interface implementation follows C++/C# conventions.</i></h6>
 
+#### Struct field visibility
+
+Field visibility is determined by the first character of the field name:
+
+| First Character | Visibility | Access |
+|-----------------|------------|--------|
+| **Uppercase** (A-Z) | Public | Accessible from anywhere |
+| **lowercase** (a-z) | Private | Only accessible within struct methods |
+
+```rust
+struct Person {
+    Name: char*;    // Public - starts with uppercase 'N'
+    Age: i32;       // Public - starts with uppercase 'A'
+    id: i64;        // Private - starts with lowercase 'i'
+    cache: bool;    // Private - starts with lowercase 'c'
+}
+
+fn printPerson(p: Person*) {
+    printf("Name: %s", p.Name);  // OK - Name is public
+    printf("Age: %d", p.Age);    // OK - Age is public
+    // printf("ID: %d", p.id);   // ERROR - id is private
+}
+```
+
+<h6><i>This convention is inspired by Go's visibility rules, where capitalization determines whether an identifier is exported. It makes visibility immediately visible in the code without requiring additional keywords.</i></h6>
+
+> [!TIP]
+> Use **Uppercase** for fields that are part of your struct's public API. Use **lowercase** for internal implementation details that should not be accessed directly.
+
+<h6><i>See `samples/struct_features.j` for a comprehensive example of all struct features including visibility, interfaces, and various field types.</i></h6>
+
 #### Methods: explicit `self` parameter
 
 ```rust
 fn print(self: Person*) {
-    printf("Name: %s", self.firstName);
+    printf("Name: %s", self.Name);
 }
 ```
 

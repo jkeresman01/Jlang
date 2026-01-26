@@ -88,4 +88,14 @@ struct AssignExpr : public Expression
     void Accept(AstVisitor &visitor) override { visitor.VisitAssignExpr(*this); }
 };
 
+struct MemberAccessExpr : public Expression
+{
+    std::shared_ptr<AstNode> object;
+    std::string memberName;
+
+    MemberAccessExpr() { type = NodeType::MemberAccessExpr; }
+
+    void Accept(AstVisitor &visitor) override { visitor.VisitMemberAccessExpr(*this); }
+};
+
 } // namespace jlang

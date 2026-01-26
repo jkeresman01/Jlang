@@ -2,6 +2,7 @@
 
 #include "../Common/Logger.h"
 
+#include <cctype>
 #include <unordered_set>
 
 namespace jlang
@@ -237,7 +238,8 @@ std::shared_ptr<AstNode> Parser::ParseStruct()
             JLANG_ERROR("Expected ';' after struct field");
         }
 
-        StructField field{fieldName, TypeRef{typeName, isPointer}};
+        bool isPublic = !fieldName.empty() && std::isupper(static_cast<unsigned char>(fieldName[0]));
+        StructField field{fieldName, TypeRef{typeName, isPointer}, isPublic};
         structDeclNode->fields.push_back(field);
     }
 
@@ -814,17 +816,7 @@ std::shared_ptr<AstNode> Parser::ParsePrimary()
     {
         std::string name = Previous().m_lexeme;
 
-        // Handle member access: p.firstName
-        while (IsMatched(TokenType::Dot))
-        {
-            if (!IsMatched(TokenType::Identifier))
-            {
-                JLANG_ERROR("Expected member name after '.'");
-                break;
-            }
-            name += "." + Previous().m_lexeme;
-        }
-
+        // Check for function call first (before member access)
         if (IsMatched(TokenType::LParen))
         {
             auto call = std::make_shared<CallExpr>();
@@ -846,12 +838,28 @@ std::shared_ptr<AstNode> Parser::ParsePrimary()
 
             return call;
         }
-        else
+
+        // Start with a variable expression
+        std::shared_ptr<AstNode> expr = std::make_shared<VarExpr>();
+        std::static_pointer_cast<VarExpr>(expr)->name = name;
+
+        // Handle member access chain: obj.field1.field2
+        while (IsMatched(TokenType::Dot))
         {
-            auto var = std::make_shared<VarExpr>();
-            var->name = name;
-            return var;
+            if (!IsMatched(TokenType::Identifier))
+            {
+                JLANG_ERROR("Expected member name after '.'");
+                break;
+            }
+            std::string memberName = Previous().m_lexeme;
+
+            auto memberAccess = std::make_shared<MemberAccessExpr>();
+            memberAccess->object = expr;
+            memberAccess->memberName = memberName;
+            expr = memberAccess;
         }
+
+        return expr;
     }
 
     // Handle string literals

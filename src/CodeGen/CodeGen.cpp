@@ -79,6 +79,7 @@ void CodeGenerator::VisitFunctionDecl(FunctionDecl &node)
     {
         arg.setName(node.params[paramIndex].name);
         m_namedValues[node.params[paramIndex].name] = &arg;
+        m_variableTypes[node.params[paramIndex].name] = node.params[paramIndex].type;
         ++paramIndex;
     }
 
@@ -97,7 +98,28 @@ void CodeGenerator::VisitFunctionDecl(FunctionDecl &node)
 
 void CodeGenerator::VisitInterfaceDecl(InterfaceDecl &) {}
 
-void CodeGenerator::VisitStructDecl(StructDecl &) {}
+void CodeGenerator::VisitStructDecl(StructDecl &node)
+{
+    // Create LLVM struct type
+    std::vector<llvm::Type *> fieldTypes;
+    fieldTypes.reserve(node.fields.size());
+
+    StructInfo structInfo;
+
+    for (unsigned i = 0; i < node.fields.size(); ++i)
+    {
+        const auto &field = node.fields[i];
+        llvm::Type *fieldType = MapType(field.type);
+        fieldTypes.push_back(fieldType);
+
+        structInfo.fields[field.name] = FieldInfo{i, field.type, field.isPublic};
+    }
+
+    llvm::StructType *structType = llvm::StructType::create(m_Context, fieldTypes, node.name);
+    structInfo.llvmType = structType;
+
+    m_structTypes[node.name] = structInfo;
+}
 
 void CodeGenerator::VisitVariableDecl(VariableDecl &node)
 {
@@ -120,6 +142,7 @@ void CodeGenerator::VisitVariableDecl(VariableDecl &node)
     }
 
     m_namedValues[node.name] = alloca;
+    m_variableTypes[node.name] = node.varType; // Track the type for member access
 }
 
 void CodeGenerator::VisitIfStatement(IfStatement &node)
@@ -643,14 +666,31 @@ void CodeGenerator::VisitAllocExpr(AllocExpr &node)
         return;
     }
 
-    // Calculate size - for now, use 8 bytes as default struct size
-    // TODO: Implement proper struct size calculation based on registered struct types
-    llvm::Value *size = llvm::ConstantInt::get(llvm::Type::getInt64Ty(m_Context), 8);
+    // Calculate size based on the type being allocated
+    uint64_t allocSize = 8; // Default size
+
+    // Check if we're allocating a struct
+    auto structIt = m_structTypes.find(node.allocType.name);
+    if (structIt != m_structTypes.end())
+    {
+        // Get the size of the struct from LLVM's data layout
+        llvm::StructType *structType = structIt->second.llvmType;
+        const llvm::DataLayout &dataLayout = m_Module->getDataLayout();
+        allocSize = dataLayout.getTypeAllocSize(structType);
+    }
+
+    llvm::Value *size = llvm::ConstantInt::get(llvm::Type::getInt64Ty(m_Context), allocSize);
 
     // Call malloc
     llvm::Value *allocated = m_IRBuilder.CreateCall(mallocFunc, {size}, "alloc");
 
-    // The result is already a pointer, store it directly
+    // Cast to the appropriate pointer type
+    llvm::Type *targetType = MapType(node.allocType);
+    if (allocated->getType() != targetType)
+    {
+        allocated = m_IRBuilder.CreateBitCast(allocated, targetType, "alloc_cast");
+    }
+
     m_LastValue = allocated;
 }
 
@@ -687,6 +727,78 @@ void CodeGenerator::VisitAssignExpr(AssignExpr &node)
     }
 }
 
+void CodeGenerator::VisitMemberAccessExpr(MemberAccessExpr &node)
+{
+    // Get the object (should be a pointer to a struct)
+    node.object->Accept(*this);
+    llvm::Value *objectPtr = m_LastValue;
+
+    if (!objectPtr)
+    {
+        JLANG_ERROR("Invalid object in member access");
+        return;
+    }
+
+    // Determine the struct type from the object
+    // We need to trace back to find the struct type
+    std::string structTypeName;
+
+    // If the object is a VarExpr, look up its type
+    if (auto *varExpr = dynamic_cast<VarExpr *>(node.object.get()))
+    {
+        auto typeIt = m_variableTypes.find(varExpr->name);
+        if (typeIt != m_variableTypes.end())
+        {
+            structTypeName = typeIt->second.name;
+        }
+    }
+
+    if (structTypeName.empty())
+    {
+        JLANG_ERROR("Cannot determine struct type for member access");
+        return;
+    }
+
+    // Find the struct info
+    auto structIt = m_structTypes.find(structTypeName);
+    if (structIt == m_structTypes.end())
+    {
+        JLANG_ERROR(STR("Unknown struct type: %s", structTypeName.c_str()));
+        return;
+    }
+
+    const StructInfo &structInfo = structIt->second;
+
+    // Find the field
+    auto fieldIt = structInfo.fields.find(node.memberName);
+    if (fieldIt == structInfo.fields.end())
+    {
+        JLANG_ERROR(
+            STR("Unknown field '%s' in struct '%s'", node.memberName.c_str(), structTypeName.c_str()));
+        return;
+    }
+
+    const FieldInfo &fieldInfo = fieldIt->second;
+
+    // Check visibility - private fields (lowercase) can only be accessed from within the struct's methods
+    // For now, we'll allow all access but emit a warning for private fields
+    // A proper implementation would track the current context
+    if (!fieldInfo.isPublic)
+    {
+        JLANG_ERROR(STR("Cannot access private field '%s' in struct '%s'", node.memberName.c_str(),
+                        structTypeName.c_str()));
+        return;
+    }
+
+    // Generate GEP to access the field
+    llvm::Value *fieldPtr = m_IRBuilder.CreateStructGEP(structInfo.llvmType, objectPtr, fieldInfo.index,
+                                                        node.memberName + "_ptr");
+
+    // Load the field value
+    llvm::Type *fieldType = MapType(fieldInfo.type);
+    m_LastValue = m_IRBuilder.CreateLoad(fieldType, fieldPtr, node.memberName);
+}
+
 llvm::Type *CodeGenerator::MapType(const TypeRef &typeRef)
 {
     using TypeGetter = llvm::Type *(*)(llvm::LLVMContext &);
@@ -719,8 +831,17 @@ llvm::Type *CodeGenerator::MapType(const TypeRef &typeRef)
     }
     else
     {
-        // User-defined type (struct) - use opaque pointer for now
-        baseType = llvm::Type::getInt8Ty(m_Context);
+        // Check if it's a registered struct type
+        auto structIt = m_structTypes.find(typeRef.name);
+        if (structIt != m_structTypes.end())
+        {
+            baseType = structIt->second.llvmType;
+        }
+        else
+        {
+            // Unknown user-defined type - use i8 as placeholder
+            baseType = llvm::Type::getInt8Ty(m_Context);
+        }
     }
 
     if (typeRef.isPointer)

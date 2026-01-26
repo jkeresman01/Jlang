@@ -48,10 +48,25 @@ class CodeGenerator : public AstVisitor
     virtual void VisitCastExpr(CastExpr &) override;
     virtual void VisitAllocExpr(AllocExpr &) override;
     virtual void VisitAssignExpr(AssignExpr &) override;
+    virtual void VisitMemberAccessExpr(MemberAccessExpr &) override;
 
   private:
     void DeclareExternalFunctions();
     llvm::Type *MapType(const TypeRef &typeRef);
+
+    // Struct field information
+    struct FieldInfo
+    {
+        unsigned index;
+        TypeRef type;
+        bool isPublic;
+    };
+
+    struct StructInfo
+    {
+        llvm::StructType *llvmType;
+        std::unordered_map<std::string, FieldInfo> fields;
+    };
 
   private:
     llvm::LLVMContext m_Context;
@@ -59,6 +74,8 @@ class CodeGenerator : public AstVisitor
     llvm::IRBuilder<> m_IRBuilder;
 
     std::unordered_map<std::string, llvm::Value *> m_namedValues;
+    std::unordered_map<std::string, TypeRef> m_variableTypes;  // Track variable types for member access
+    std::unordered_map<std::string, StructInfo> m_structTypes; // Track struct definitions
     llvm::Value *m_LastValue = nullptr;
 };
 

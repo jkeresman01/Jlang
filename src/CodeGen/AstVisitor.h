@@ -21,6 +21,7 @@ struct VarExpr;
 struct CastExpr;
 struct AllocExpr;
 struct AssignExpr;
+struct MemberAccessExpr;
 
 class AstVisitor
 {
@@ -46,5 +47,6 @@ class AstVisitor
     virtual void VisitCastExpr(CastExpr &) = 0;
     virtual void VisitAllocExpr(AllocExpr &) = 0;
     virtual void VisitAssignExpr(AssignExpr &) = 0;
+    virtual void VisitMemberAccessExpr(MemberAccessExpr &) = 0;
 };
 } // namespace jlang
