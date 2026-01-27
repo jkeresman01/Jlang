@@ -474,7 +474,7 @@ Both perform the same mutation (load, add, store), but they differ in what value
 > [!NOTE]
 > **No performance difference between prefix and postfix**
 >
-> Unlike C++ iterators, there is no performance benefit to using `++x` over `x++` in jlang. Both generate the same three operations (load, add, store), and the only difference is which already-computed egister value gets returned. No temporary copy is created.
+> Unlike C++ iterators, there is no performance benefit to using `++x` over `x++` in jlang. Both generate the same three operations (load, add, store), and the only difference is which already-computed register value gets returned. No temporary copy is created.
 >
 > The "prefer `++i` over `i++`" advice comes from C++ where postfix on complex objects (like iterators) requires constructing a temporary copy:
 >
