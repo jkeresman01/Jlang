@@ -46,6 +46,7 @@ class Parser
     std::shared_ptr<AstNode> ParseAdditive();
     std::shared_ptr<AstNode> ParseMultiplicative();
     std::shared_ptr<AstNode> ParseUnary();
+    std::shared_ptr<AstNode> ParsePostfix();
     std::shared_ptr<AstNode> ParseExprStatement();
     std::shared_ptr<AstNode> ParsePrimary();
 

@@ -851,6 +851,106 @@ void CodeGenerator::VisitMemberAccessExpr(MemberAccessExpr &node)
     m_LastValue = m_IRBuilder.CreateLoad(fieldType, fieldPtr, node.memberName);
 }
 
+void CodeGenerator::VisitPrefixExpr(PrefixExpr &node)
+{
+    // Prefix ++/--: increment/decrement and return the NEW value
+    auto *varExpr = dynamic_cast<VarExpr *>(node.operand.get());
+    if (!varExpr)
+    {
+        JLANG_ERROR("Prefix increment/decrement requires a variable operand");
+        return;
+    }
+
+    auto it = m_variables.find(varExpr->name);
+    if (it == m_variables.end())
+    {
+        JLANG_ERROR(STR("Undefined variable: %s", varExpr->name.c_str()));
+        return;
+    }
+
+    // Mark variable as used
+    it->second.used = true;
+
+    llvm::Value *varPtr = it->second.value;
+    llvm::AllocaInst *alloca = llvm::dyn_cast<llvm::AllocaInst>(varPtr);
+    if (!alloca)
+    {
+        JLANG_ERROR("Cannot increment/decrement non-variable");
+        return;
+    }
+
+    // Load current value
+    llvm::Value *currentVal = m_IRBuilder.CreateLoad(alloca->getAllocatedType(), alloca, "load");
+
+    // Add or subtract 1
+    llvm::Value *one = llvm::ConstantInt::get(currentVal->getType(), 1);
+    llvm::Value *newVal;
+    if (node.op == "++")
+    {
+        newVal = m_IRBuilder.CreateAdd(currentVal, one, "inc");
+    }
+    else
+    {
+        newVal = m_IRBuilder.CreateSub(currentVal, one, "dec");
+    }
+
+    // Store new value back
+    m_IRBuilder.CreateStore(newVal, alloca);
+
+    // Return the NEW value
+    m_LastValue = newVal;
+}
+
+void CodeGenerator::VisitPostfixExpr(PostfixExpr &node)
+{
+    // Postfix ++/--: increment/decrement and return the ORIGINAL value
+    auto *varExpr = dynamic_cast<VarExpr *>(node.operand.get());
+    if (!varExpr)
+    {
+        JLANG_ERROR("Postfix increment/decrement requires a variable operand");
+        return;
+    }
+
+    auto it = m_variables.find(varExpr->name);
+    if (it == m_variables.end())
+    {
+        JLANG_ERROR(STR("Undefined variable: %s", varExpr->name.c_str()));
+        return;
+    }
+
+    // Mark variable as used
+    it->second.used = true;
+
+    llvm::Value *varPtr = it->second.value;
+    llvm::AllocaInst *alloca = llvm::dyn_cast<llvm::AllocaInst>(varPtr);
+    if (!alloca)
+    {
+        JLANG_ERROR("Cannot increment/decrement non-variable");
+        return;
+    }
+
+    // Load current value
+    llvm::Value *currentVal = m_IRBuilder.CreateLoad(alloca->getAllocatedType(), alloca, "load");
+
+    // Add or subtract 1
+    llvm::Value *one = llvm::ConstantInt::get(currentVal->getType(), 1);
+    llvm::Value *newVal;
+    if (node.op == "++")
+    {
+        newVal = m_IRBuilder.CreateAdd(currentVal, one, "inc");
+    }
+    else
+    {
+        newVal = m_IRBuilder.CreateSub(currentVal, one, "dec");
+    }
+
+    // Store new value back
+    m_IRBuilder.CreateStore(newVal, alloca);
+
+    // Return the ORIGINAL value
+    m_LastValue = currentVal;
+}
+
 void CodeGenerator::CheckUnusedVariables()
 {
     // TODO: make this a cool hard error that stops compilation (like Go)

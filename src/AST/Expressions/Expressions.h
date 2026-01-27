@@ -98,4 +98,24 @@ struct MemberAccessExpr : public Expression
     void Accept(AstVisitor &visitor) override { visitor.VisitMemberAccessExpr(*this); }
 };
 
+struct PrefixExpr : public Expression
+{
+    std::string op; // "++" or "--"
+    std::shared_ptr<AstNode> operand;
+
+    PrefixExpr() { type = NodeType::PrefixExpr; }
+
+    void Accept(AstVisitor &visitor) override { visitor.VisitPrefixExpr(*this); }
+};
+
+struct PostfixExpr : public Expression
+{
+    std::string op; // "++" or "--"
+    std::shared_ptr<AstNode> operand;
+
+    PostfixExpr() { type = NodeType::PostfixExpr; }
+
+    void Accept(AstVisitor &visitor) override { visitor.VisitPostfixExpr(*this); }
+};
+
 } // namespace jlang

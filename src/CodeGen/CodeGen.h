@@ -50,6 +50,8 @@ class CodeGenerator : public AstVisitor
     virtual void VisitAllocExpr(AllocExpr &) override;
     virtual void VisitAssignExpr(AssignExpr &) override;
     virtual void VisitMemberAccessExpr(MemberAccessExpr &) override;
+    virtual void VisitPrefixExpr(PrefixExpr &) override;
+    virtual void VisitPostfixExpr(PostfixExpr &) override;
 
   private:
     void DeclareExternalFunctions();

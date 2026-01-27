@@ -400,6 +400,95 @@ or.merge:
 
 > **Note:** Take with a grain of salt, need to double check.
 
+#### Increment and Decrement Operators
+
+jlang supports both prefix and postfix increment (`++`) and decrement (`--`) operators:
+
+```rust
+var x: i32 = 5;
+
+// Prefix: increment first, then return new value
+var a: i32 = ++x;  // x becomes 6, a is 6
+
+// Postfix: return original value, then increment
+var b: i32 = x++;  // b is 6, x becomes 7
+
+// Same for decrement
+var y: i32 = 10;
+var c: i32 = --y;  // y becomes 9, c is 9
+var d: i32 = y--;  // d is 9, y becomes 8
+```
+
+| Operator | Name | Returns | When mutation happens |
+|----------|------|---------|----------------------|
+| `++x` | Prefix increment | New value | Before returning |
+| `x++` | Postfix increment | Original value | After returning |
+| `--x` | Prefix decrement | New value | Before returning |
+| `x--` | Postfix decrement | Original value | After returning |
+
+<h6><i>The operand must be a variable - you cannot use these operators on literals or expressions like `++5` or `(a+b)++`.</i></h6>
+
+<details>
+<summary><b>LLVM IR comparison</b></summary>
+
+Given this jlang code:
+
+```rust
+var x: i32 = 5;
+printf("%d", ++x);  // prefix
+printf("%d", x++);  // postfix
+```
+
+**Prefix `++x`** - returns the new value:
+
+```llvm
+  %load = load i32, ptr %x           ; load current value (5)
+  %inc = add i32 %load, 1            ; add 1 (result: 6)
+  store i32 %inc, ptr %x             ; store new value back
+  ; %inc (6) is used as the result
+```
+
+<h6><i>The incremented value `%inc` is passed to printf, so it prints 6.</i></h6>
+
+**Postfix `x++`** - returns the original value:
+
+```llvm
+  %load = load i32, ptr %x           ; load current value (6)
+  %inc = add i32 %load, 1            ; add 1 (result: 7)
+  store i32 %inc, ptr %x             ; store new value back
+  ; %load (6) is used as the result (not %inc!)
+```
+
+<h6><i>The original value `%load` is passed to printf, so it prints 6. But x is now 7.</i></h6>
+
+The key difference is which value gets returned:
+- **Prefix**: returns `%inc` (the new value)
+- **Postfix**: returns `%load` (the original value)
+
+Both perform the same mutation (load, add, store), but they differ in what value they produce as the expression result.
+
+</details>
+
+<h6><i>These operators follow C/C++/Java semantics. Use prefix when you need the updated value; use postfix when you need the value before the update.</i></h6>
+
+> [!NOTE]
+> **No performance difference between prefix and postfix**
+>
+> Unlike C++ iterators, there is no performance benefit to using `++x` over `x++` in jlang. Both generate the same three operations (load, add, store), and the only difference is which already-computed egister value gets returned. No temporary copy is created.
+>
+> The "prefer `++i` over `i++`" advice comes from C++ where postfix on complex objects (like iterators) requires constructing a temporary copy:
+>
+> ```cpp
+> // C++ iterator postfix - expensive!
+> Iterator operator++(int) {
+>     Iterator copy = *this;  // make a copy
+>     ++(*this);              // increment original
+>     return copy;            // return the copy
+> }
+> ```
+>
+> For primitive types, modern compilers optimize both to identical machine code. Choose based on semantics, not performance.
+
 ### Memory: manual management
 
 ```rust
@@ -441,7 +530,6 @@ fn add(a: i32, b: i32) -> i32 {
 | `char` | Character | 1 byte | ASCII 0-255 |
 | `char*` | String (char pointer) | 8 bytes | Memory address |
 | `void` | No value | - | Functions only |
-| `T*` | Pointer to type T | 8 bytes | Memory address |
 
 <h6><i>See `samples/types.j` for a complete working example of all types.</i></h6>
 

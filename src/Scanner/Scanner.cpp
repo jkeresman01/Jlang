@@ -95,7 +95,7 @@ void Scanner::ScanToken()
         AddToken(TokenType::Star);
         break;
     case '+':
-        AddToken(TokenType::Plus);
+        AddToken(IsMatched('+') ? TokenType::PlusPlus : TokenType::Plus);
         break;
     case '/':
         AddToken(TokenType::Slash);
@@ -133,7 +133,11 @@ void Scanner::ScanToken()
         AddToken(TokenType::Greater);
         break;
     case '-':
-        if (IsMatched('>'))
+        if (IsMatched('-'))
+        {
+            AddToken(TokenType::MinusMinus);
+        }
+        else if (IsMatched('>'))
         {
             AddToken(TokenType::Arrow);
         }

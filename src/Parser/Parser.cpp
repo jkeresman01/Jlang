@@ -695,7 +695,39 @@ std::shared_ptr<AstNode> Parser::ParseUnary()
         return unary;
     }
 
-    return ParsePrimary();
+    // Handle prefix increment/decrement
+    if (Check(TokenType::PlusPlus) || Check(TokenType::MinusMinus))
+    {
+        std::string op = Peek().m_lexeme;
+        Advance();
+        auto operand = ParseUnary();
+
+        auto prefix = std::make_shared<PrefixExpr>();
+        prefix->op = op;
+        prefix->operand = operand;
+        return prefix;
+    }
+
+    return ParsePostfix();
+}
+
+std::shared_ptr<AstNode> Parser::ParsePostfix()
+{
+    auto expr = ParsePrimary();
+
+    // Handle postfix increment/decrement
+    while (Check(TokenType::PlusPlus) || Check(TokenType::MinusMinus))
+    {
+        std::string op = Peek().m_lexeme;
+        Advance();
+
+        auto postfix = std::make_shared<PostfixExpr>();
+        postfix->op = op;
+        postfix->operand = expr;
+        expr = postfix;
+    }
+
+    return expr;
 }
 
 std::shared_ptr<AstNode> Parser::ParseExprStatement()

@@ -59,6 +59,8 @@ enum class TokenType
     Not,
     AndKeyword, // 'and' keyword (non-short-circuit)
     OrKeyword,  // 'or' keyword (non-short-circuit)
+    PlusPlus,   // ++
+    MinusMinus, // --
 
     // Literals and identifiers
     Identifier,
