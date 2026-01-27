@@ -466,6 +466,35 @@ TEST(ScannerTest, TokenizesColon)
     EXPECT_EQ(tokens[0].m_lexeme, ":");
 }
 
+TEST(ScannerTest, TokenizesColonEqual)
+{
+    // Given
+    Scanner scanner(":=");
+
+    // When
+    std::vector<Token> tokens = scanner.Tokenize();
+
+    // Then
+    ASSERT_EQ(tokens.size(), 2);
+    EXPECT_EQ(tokens[0].m_type, TokenType::ColonEqual);
+    EXPECT_EQ(tokens[0].m_lexeme, ":=");
+}
+
+TEST(ScannerTest, TokenizesColonAndColonEqualSequence)
+{
+    // Given - tests that : and := are distinguished correctly
+    Scanner scanner(": := :");
+
+    // When
+    std::vector<Token> tokens = scanner.Tokenize();
+
+    // Then
+    ASSERT_EQ(tokens.size(), 4);
+    EXPECT_EQ(tokens[0].m_type, TokenType::Colon);
+    EXPECT_EQ(tokens[1].m_type, TokenType::ColonEqual);
+    EXPECT_EQ(tokens[2].m_type, TokenType::Colon);
+}
+
 TEST(ScannerTest, TokenizesComma)
 {
     // Given
@@ -895,6 +924,28 @@ TEST(ScannerTest, TokenizesVariableDeclaration)
     EXPECT_EQ(tokens[5].m_lexeme, "42");
     EXPECT_EQ(tokens[6].m_type, TokenType::Semicolon);
     EXPECT_EQ(tokens[7].m_type, TokenType::EndOfFile);
+}
+
+TEST(ScannerTest, TokenizesVariableDeclarationWithTypeInference)
+{
+    // Given - type inference syntax: var x := 42;
+    std::string source = "var x := 42;";
+    Scanner scanner(source);
+
+    // When
+    std::vector<Token> tokens = scanner.Tokenize();
+
+    // Then
+    ASSERT_EQ(tokens.size(), 6);
+    EXPECT_EQ(tokens[0].m_type, TokenType::Var);
+    EXPECT_EQ(tokens[1].m_type, TokenType::Identifier);
+    EXPECT_EQ(tokens[1].m_lexeme, "x");
+    EXPECT_EQ(tokens[2].m_type, TokenType::ColonEqual);
+    EXPECT_EQ(tokens[2].m_lexeme, ":=");
+    EXPECT_EQ(tokens[3].m_type, TokenType::NumberLiteral);
+    EXPECT_EQ(tokens[3].m_lexeme, "42");
+    EXPECT_EQ(tokens[4].m_type, TokenType::Semicolon);
+    EXPECT_EQ(tokens[5].m_type, TokenType::EndOfFile);
 }
 
 TEST(ScannerTest, TokenizesIfElseStatement)

@@ -8,20 +8,14 @@
 
 using namespace jlang;
 
-// Forward declarations
-void TryScanner();
-void TryParser();
-void TryCodeGen();
-
-// std::filesystem::path is better here, but don't care, it's for testing, if you have C++17
-// It would have taken me less time to replace it than to type this out
 std::string Load(const std::string &path)
 {
     std::ifstream in(path);
 
     if (!in.is_open())
     {
-        std::cout << "No can do for: " << path << "\r\n";
+        std::cerr << "Error: Cannot open file: " << path << "\n";
+        return "";
     }
 
     std::stringstream buffer;
@@ -32,59 +26,33 @@ std::string Load(const std::string &path)
     return buffer.str();
 }
 
-void TryAllThis()
+void Compile(const std::string &filePath)
 {
-    TryScanner();
-    TryParser();
-    TryCodeGen();
-}
-
-void TryScanner()
-{
-    std::string sourceCode = Load("../samples/simple.j");
-
-    Scanner scanner(sourceCode);
-    const std::vector<Token> &tokens = scanner.Tokenize();
-
-    std::cout << "Tokens: \r\n";
-
-    for (const auto &token : tokens)
+    std::string sourceCode = Load(filePath);
+    if (sourceCode.empty())
     {
-        std::cout << token.ToString() << "\r\n ";
+        return;
     }
-}
-
-void TryParser()
-{
-    std::string sourceCode = Load("../samples/simple.j");
 
     Scanner scanner(sourceCode);
     const std::vector<Token> &tokens = scanner.Tokenize();
 
     Parser parser(tokens);
     std::vector<std::shared_ptr<AstNode>> program = parser.Parse();
-
-    std::cout << "\r\nParsed " << program.size() << " top-level declarations\r\n";
-}
-
-void TryCodeGen()
-{
-    std::string sourceCode = Load("../samples/simple.j");
-
-    Scanner scanner(sourceCode);
-    const std::vector<Token> &tokens = scanner.Tokenize();
-
-    Parser parser(tokens);
-    std::vector<std::shared_ptr<AstNode>> program = parser.Parse();
-
-    std::cout << "\r\n--- LLVM IR ---\r\n";
 
     CodeGenerator codegen;
     codegen.Generate(program);
     codegen.DumpIR();
 }
 
-int main()
+int main(int argc, char *argv[])
 {
-    TryAllThis();
+    if (argc < 2)
+    {
+        std::cerr << "Usage: Jlang <source_file.j>\n";
+        return 1;
+    }
+
+    Compile(argv[1]);
+    return 0;
 }

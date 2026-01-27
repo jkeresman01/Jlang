@@ -137,7 +137,41 @@ void CodeGenerator::VisitStructDecl(StructDecl &node)
 
 void CodeGenerator::VisitVariableDecl(VariableDecl &node)
 {
-    llvm::Type *varType = MapType(node.varType);
+    llvm::Type *varType = nullptr;
+    TypeRef inferredType = node.varType;
+
+    // Check if type inference is needed (empty type name)
+    if (node.varType.name.empty())
+    {
+        if (!node.initializer)
+        {
+            JLANG_ERROR(STR("Type inference requires an initializer for variable: %s", node.name.c_str()));
+            return;
+        }
+
+        // Evaluate initializer first to get its type
+        node.initializer->Accept(*this);
+        if (!m_LastValue)
+        {
+            JLANG_ERROR(STR("Invalid initializer for variable: %s", node.name.c_str()));
+            return;
+        }
+
+        varType = m_LastValue->getType();
+        inferredType = InferTypeRef(varType);
+
+        // Create alloca and store the already-computed value
+        llvm::AllocaInst *alloca = m_IRBuilder.CreateAlloca(varType, nullptr, node.name);
+        m_IRBuilder.CreateStore(m_LastValue, alloca);
+
+        // Track variable with inferred type
+        m_variables[node.name] = VariableInfo{alloca, inferredType, false};
+        m_currentFunctionVariables.insert(node.name);
+        return;
+    }
+
+    // Explicit type - use existing logic
+    varType = MapType(node.varType);
 
     llvm::AllocaInst *alloca = m_IRBuilder.CreateAlloca(varType, nullptr, node.name);
 
@@ -882,6 +916,60 @@ llvm::Type *CodeGenerator::MapType(const TypeRef &typeRef)
     }
 
     return baseType;
+}
+
+TypeRef CodeGenerator::InferTypeRef(llvm::Type *llvmType)
+{
+    // Handle pointer types
+    if (llvmType->isPointerTy())
+    {
+        // In opaque pointer mode (LLVM 15+), we can't get the element type
+        // Default to i8* (char*) for generic pointers
+        return TypeRef{"char", true};
+    }
+
+    // Handle integer types
+    if (llvmType->isIntegerTy())
+    {
+        unsigned bitWidth = llvmType->getIntegerBitWidth();
+        switch (bitWidth)
+        {
+        case 1:
+            return TypeRef{"bool", false};
+        case 8:
+            return TypeRef{"i8", false};
+        case 16:
+            return TypeRef{"i16", false};
+        case 32:
+            return TypeRef{"i32", false};
+        case 64:
+            return TypeRef{"i64", false};
+        default:
+            return TypeRef{"i32", false}; // Default to i32
+        }
+    }
+
+    // Handle floating point types
+    if (llvmType->isFloatTy())
+    {
+        return TypeRef{"f32", false};
+    }
+    if (llvmType->isDoubleTy())
+    {
+        return TypeRef{"f64", false};
+    }
+
+    // Handle struct types
+    if (auto *structType = llvm::dyn_cast<llvm::StructType>(llvmType))
+    {
+        if (structType->hasName())
+        {
+            return TypeRef{structType->getName().str(), false};
+        }
+    }
+
+    // Default fallback
+    return TypeRef{"i32", false};
 }
 
 } // namespace jlang

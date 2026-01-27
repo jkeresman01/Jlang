@@ -53,6 +53,7 @@ enum class TokenType
     Less,
     Greater,
     Equal,
+    ColonEqual, // := for type inference
     And,
     Or,
     Not,

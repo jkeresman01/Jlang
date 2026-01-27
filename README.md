@@ -66,6 +66,29 @@ var isEmpty: bool = false;
 
 <h6><i>The colon syntax (`name: Type`) clearly separates identifiers from types and is consistent with modern languages like TypeScript, Kotlin, and Rust.</i></h6>
 
+#### Type Inference with `:=`
+
+jlang supports type inference using the `:=` operator. The type is automatically inferred from the initializer expression:
+
+```rust
+// Type inferred as i32
+var x := 42;
+
+// Type inferred as f64
+var pi := 3.14159;
+
+// Type inferred as bool
+var ready := true;
+
+// Type inferred from expression (i32)
+var sum := x + 10;
+
+// Type inferred from comparison (bool)
+var isPositive := x > 0;
+```
+
+<h6><i>Type inference reduces verbosity while maintaining type safety. The compiler determines the type at compile-time, so there's no runtime overhead.</i></h6>
+
 #### Unused variables are compile-time errors
 
 jlang enforces that all declared variables must be used. If you declare a variable but never read from it, the compiler will emit an error:

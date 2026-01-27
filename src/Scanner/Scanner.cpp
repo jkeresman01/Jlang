@@ -83,7 +83,7 @@ void Scanner::ScanToken()
         AddToken(TokenType::Semicolon);
         break;
     case ':':
-        AddToken(TokenType::Colon);
+        AddToken(IsMatched('=') ? TokenType::ColonEqual : TokenType::Colon);
         break;
     case ',':
         AddToken(TokenType::Comma);

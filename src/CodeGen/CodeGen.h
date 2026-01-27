@@ -54,6 +54,7 @@ class CodeGenerator : public AstVisitor
   private:
     void DeclareExternalFunctions();
     llvm::Type *MapType(const TypeRef &typeRef);
+    TypeRef InferTypeRef(llvm::Type *llvmType);
 
     // Struct field information
     struct FieldInfo

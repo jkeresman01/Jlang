@@ -424,28 +424,44 @@ std::shared_ptr<AstNode> Parser::ParseVarDecl()
 
     std::string varName = Previous().m_lexeme;
 
-    // Expect colon after variable name: var name: Type
-    if (!IsMatched(TokenType::Colon))
-    {
-        JLANG_ERROR("Expected ':' after variable name");
-        return nullptr;
-    }
-
-    // Parse type
-    std::string typeName = ParseTypeName();
-    if (typeName.empty())
-    {
-        JLANG_ERROR("Expected variable type");
-        return nullptr;
-    }
-
-    bool isPointer = IsMatched(TokenType::Star);
-
+    std::string typeName;
+    bool isPointer = false;
     std::shared_ptr<AstNode> initializer = nullptr;
 
-    if (IsMatched(TokenType::Equal))
+    // Check for type inference syntax: var x := expr;
+    if (IsMatched(TokenType::ColonEqual))
     {
+        // Type inference - parse initializer, type will be inferred in CodeGen
         initializer = ParseExpression();
+        if (!initializer)
+        {
+            JLANG_ERROR("Expected initializer expression after ':='");
+            return nullptr;
+        }
+    }
+    else
+    {
+        // Explicit type syntax: var x: Type = expr;
+        if (!IsMatched(TokenType::Colon))
+        {
+            JLANG_ERROR("Expected ':' or ':=' after variable name");
+            return nullptr;
+        }
+
+        // Parse type
+        typeName = ParseTypeName();
+        if (typeName.empty())
+        {
+            JLANG_ERROR("Expected variable type");
+            return nullptr;
+        }
+
+        isPointer = IsMatched(TokenType::Star);
+
+        if (IsMatched(TokenType::Equal))
+        {
+            initializer = ParseExpression();
+        }
     }
 
     if (!IsMatched(TokenType::Semicolon))
