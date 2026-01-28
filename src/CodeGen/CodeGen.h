@@ -8,6 +8,7 @@
 #include "../AST/TopLevelDecl/TopLevelDecl.h"
 
 #include <memory>
+#include <optional>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -83,6 +84,21 @@ class CodeGenerator : public AstVisitor
     };
 
     void CheckUnusedVariables();
+
+    // Loop unrolling optimization
+    static const int MAX_UNROLL_COUNT = 8;
+
+    struct LoopUnrollInfo
+    {
+        std::string varName;
+        int64_t start;
+        int64_t end;
+        int64_t step;          // +1 or -1
+        std::string compareOp; // "<", "<=", ">", ">="
+    };
+
+    std::optional<LoopUnrollInfo> AnalyzeForUnroll(ForStatement &node);
+    bool BodyModifiesVar(const std::shared_ptr<AstNode> &node, const std::string &varName);
 
   private:
     llvm::LLVMContext m_Context;
