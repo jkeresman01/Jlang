@@ -695,6 +695,26 @@ std::shared_ptr<AstNode> Parser::ParseExpression()
     {
         compoundOp = "%";
     }
+    else if (IsMatched(TokenType::AmpersandEqual))
+    {
+        compoundOp = "&";
+    }
+    else if (IsMatched(TokenType::PipeEqual))
+    {
+        compoundOp = "|";
+    }
+    else if (IsMatched(TokenType::CaretEqual))
+    {
+        compoundOp = "^";
+    }
+    else if (IsMatched(TokenType::LeftShiftEqual))
+    {
+        compoundOp = "<<";
+    }
+    else if (IsMatched(TokenType::RightShiftEqual))
+    {
+        compoundOp = ">>";
+    }
 
     if (!compoundOp.empty())
     {
@@ -743,16 +763,73 @@ std::shared_ptr<AstNode> Parser::ParseLogicalOr()
 
 std::shared_ptr<AstNode> Parser::ParseLogicalAnd()
 {
-    auto left = ParseEquality();
+    auto left = ParseBitwiseOr();
 
     while (Check(TokenType::And) || Check(TokenType::AndKeyword))
     {
         std::string op = Peek().m_lexeme;
         Advance();
-        auto right = ParseEquality();
+        auto right = ParseBitwiseOr();
 
         auto binary = std::make_shared<BinaryExpr>();
         binary->op = op;
+        binary->left = left;
+        binary->right = right;
+        left = binary;
+    }
+
+    return left;
+}
+
+std::shared_ptr<AstNode> Parser::ParseBitwiseOr()
+{
+    auto left = ParseBitwiseXor();
+
+    while (Check(TokenType::Pipe))
+    {
+        Advance();
+        auto right = ParseBitwiseXor();
+
+        auto binary = std::make_shared<BinaryExpr>();
+        binary->op = "|";
+        binary->left = left;
+        binary->right = right;
+        left = binary;
+    }
+
+    return left;
+}
+
+std::shared_ptr<AstNode> Parser::ParseBitwiseXor()
+{
+    auto left = ParseBitwiseAnd();
+
+    while (Check(TokenType::Caret))
+    {
+        Advance();
+        auto right = ParseBitwiseAnd();
+
+        auto binary = std::make_shared<BinaryExpr>();
+        binary->op = "^";
+        binary->left = left;
+        binary->right = right;
+        left = binary;
+    }
+
+    return left;
+}
+
+std::shared_ptr<AstNode> Parser::ParseBitwiseAnd()
+{
+    auto left = ParseEquality();
+
+    while (Check(TokenType::Ampersand))
+    {
+        Advance();
+        auto right = ParseEquality();
+
+        auto binary = std::make_shared<BinaryExpr>();
+        binary->op = "&";
         binary->left = left;
         binary->right = right;
         left = binary;
@@ -783,10 +860,30 @@ std::shared_ptr<AstNode> Parser::ParseEquality()
 
 std::shared_ptr<AstNode> Parser::ParseComparison()
 {
-    auto left = ParseAdditive();
+    auto left = ParseShift();
 
     while (Check(TokenType::Less) || Check(TokenType::LessEqual) || Check(TokenType::Greater) ||
            Check(TokenType::GreaterEqual))
+    {
+        std::string op = Peek().m_lexeme;
+        Advance();
+        auto right = ParseShift();
+
+        auto binary = std::make_shared<BinaryExpr>();
+        binary->op = op;
+        binary->left = left;
+        binary->right = right;
+        left = binary;
+    }
+
+    return left;
+}
+
+std::shared_ptr<AstNode> Parser::ParseShift()
+{
+    auto left = ParseAdditive();
+
+    while (Check(TokenType::LeftShift) || Check(TokenType::RightShift))
     {
         std::string op = Peek().m_lexeme;
         Advance();
@@ -844,7 +941,7 @@ std::shared_ptr<AstNode> Parser::ParseMultiplicative()
 
 std::shared_ptr<AstNode> Parser::ParseUnary()
 {
-    if (Check(TokenType::Not))
+    if (Check(TokenType::Not) || Check(TokenType::Tilde))
     {
         std::string op = Peek().m_lexeme;
         Advance();

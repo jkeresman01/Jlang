@@ -619,6 +619,26 @@ void CodeGenerator::VisitBinaryExpr(BinaryExpr &node)
     {
         m_LastValue = m_IRBuilder.CreateSRem(leftVal, rightVal, "mod");
     }
+    else if (node.op == "&")
+    {
+        m_LastValue = m_IRBuilder.CreateAnd(leftVal, rightVal, "bitand");
+    }
+    else if (node.op == "|")
+    {
+        m_LastValue = m_IRBuilder.CreateOr(leftVal, rightVal, "bitor");
+    }
+    else if (node.op == "^")
+    {
+        m_LastValue = m_IRBuilder.CreateXor(leftVal, rightVal, "bitxor");
+    }
+    else if (node.op == "<<")
+    {
+        m_LastValue = m_IRBuilder.CreateShl(leftVal, rightVal, "shl");
+    }
+    else if (node.op == ">>")
+    {
+        m_LastValue = m_IRBuilder.CreateAShr(leftVal, rightVal, "shr");
+    }
     else if (node.op == "and")
     {
         // Non-short-circuit AND: both operands are always evaluated
@@ -685,6 +705,11 @@ void CodeGenerator::VisitUnaryExpr(UnaryExpr &node)
         }
         m_LastValue = m_IRBuilder.CreateXor(
             boolVal, llvm::ConstantInt::get(llvm::Type::getInt1Ty(m_Context), 1), "not");
+    }
+    else if (node.op == "~")
+    {
+        // Bitwise NOT (flip all bits)
+        m_LastValue = m_IRBuilder.CreateNot(operandVal, "bitnot");
     }
     else
     {

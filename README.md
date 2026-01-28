@@ -608,6 +608,47 @@ Both perform the same mutation (load, add, store), but they differ in what value
 >
 > For primitive types, modern compilers optimize both to identical machine code. Choose based on semantics, not performance.
 
+#### Bitwise Operators
+
+jlang supports the standard set of bitwise operators for integer types:
+
+| Operator | Description | Example |
+|----------|-------------|---------|
+| `&` | Bitwise AND | `255 & 15` → `15` |
+| `\|` | Bitwise OR | `16 \| 8` → `24` |
+| `^` | Bitwise XOR | `255 ^ 15` → `240` |
+| `~` | Bitwise NOT (unary) | `~0` → `-1` |
+| `<<` | Left shift | `1 << 4` → `16` |
+| `>>` | Right shift (arithmetic) | `32 >> 2` → `8` |
+
+All binary bitwise operators also have compound assignment forms: `&=`, `|=`, `^=`, `<<=`, `>>=`.
+
+```rust
+var flags: i32 = 0;
+flags |= 4;       // set bit 2
+flags &= ~2;      // clear bit 1
+flags ^= 8;       // toggle bit 3
+var mask: i32 = 1 << 5;  // bit 5 = 32
+```
+
+**XOR swap**
+
+A classic use of XOR is swapping two variables without a temporary:
+
+```rust
+var a: i32 = 42;
+var b: i32 = 99;
+a ^= b;
+b ^= a;
+a ^= b;
+// a is now 99, b is now 42
+```
+
+> [!NOTE]
+> The XOR swap creates a serial data dependency chain — each step reads the result of the previous one, which prevents the CPU from using instruction-level parallelism. A straightforward temp-variable swap (`var tmp := a; a = b; b = tmp;`) allows the two loads to execute in parallel and is actually faster on modern out-of-order hardware. The XOR trick is a neat bit of trivia, not a performance optimization.
+
+<h6><i>See `samples/bitwise.j` for a working example.</i></h6>
+
 ### Memory: manual management
 
 ```rust

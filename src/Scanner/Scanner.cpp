@@ -127,9 +127,13 @@ void Scanner::ScanToken()
         {
             AddToken(TokenType::And);
         }
+        else if (IsMatched('='))
+        {
+            AddToken(TokenType::AmpersandEqual);
+        }
         else
         {
-            AddToken(TokenType::Unknown);
+            AddToken(TokenType::Ampersand);
         }
         break;
     case '|':
@@ -137,16 +141,40 @@ void Scanner::ScanToken()
         {
             AddToken(TokenType::Or);
         }
+        else if (IsMatched('='))
+        {
+            AddToken(TokenType::PipeEqual);
+        }
         else
         {
-            AddToken(TokenType::Unknown);
+            AddToken(TokenType::Pipe);
         }
         break;
+    case '^':
+        AddToken(IsMatched('=') ? TokenType::CaretEqual : TokenType::Caret);
+        break;
+    case '~':
+        AddToken(TokenType::Tilde);
+        break;
     case '<':
-        AddToken(IsMatched('=') ? TokenType::LessEqual : TokenType::Less);
+        if (IsMatched('<'))
+        {
+            AddToken(IsMatched('=') ? TokenType::LeftShiftEqual : TokenType::LeftShift);
+        }
+        else
+        {
+            AddToken(IsMatched('=') ? TokenType::LessEqual : TokenType::Less);
+        }
         break;
     case '>':
-        AddToken(IsMatched('=') ? TokenType::GreaterEqual : TokenType::Greater);
+        if (IsMatched('>'))
+        {
+            AddToken(IsMatched('=') ? TokenType::RightShiftEqual : TokenType::RightShift);
+        }
+        else
+        {
+            AddToken(IsMatched('=') ? TokenType::GreaterEqual : TokenType::Greater);
+        }
         break;
     case '?':
         AddToken(TokenType::Question);
