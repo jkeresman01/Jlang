@@ -52,7 +52,7 @@ enum class TokenType
     NotEqual,
     EqualEqual,
     Less,
-    LessEqual,    // <=
+    LessEqual, // <=
     Greater,
     GreaterEqual, // >=
     Equal,
