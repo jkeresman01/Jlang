@@ -9,6 +9,7 @@ struct TypeRef
 {
     std::string name;
     bool isPointer = false;
+    bool isNullable = false;
 };
 
 struct InterfaceDecl : public AstNode

@@ -71,6 +71,7 @@ enum class TokenType
     SlashEqual,   // /=
     Percent,      // %
     PercentEqual, // %=
+    Question,     // ?
 
     // Literals and identifiers
     Identifier,

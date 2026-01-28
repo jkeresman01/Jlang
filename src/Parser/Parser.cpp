@@ -233,13 +233,25 @@ std::shared_ptr<AstNode> Parser::ParseStruct()
 
         bool isPointer = IsMatched(TokenType::Star);
 
+        bool isNullable = false;
+        if (isPointer && IsMatched(TokenType::Question))
+        {
+            isNullable = true;
+        }
+        else if (!isPointer && Check(TokenType::Question))
+        {
+            JLANG_ERROR("Only pointer types can be nullable. Use '" + typeName + "*?' instead of '" +
+                        typeName + "?'");
+            Advance();
+        }
+
         if (!IsMatched(TokenType::Semicolon))
         {
             JLANG_ERROR("Expected ';' after struct field");
         }
 
         bool isPublic = !fieldName.empty() && std::isupper(static_cast<unsigned char>(fieldName[0]));
-        StructField field{fieldName, TypeRef{typeName, isPointer}, isPublic};
+        StructField field{fieldName, TypeRef{typeName, isPointer, isNullable}, isPublic};
         structDeclNode->fields.push_back(field);
     }
 
@@ -296,7 +308,19 @@ std::shared_ptr<AstNode> Parser::ParseFunction()
 
             bool isPointer = IsMatched(TokenType::Star);
 
-            params.push_back(Parameter{paramName, TypeRef{typeName, isPointer}});
+            bool isNullable = false;
+            if (isPointer && IsMatched(TokenType::Question))
+            {
+                isNullable = true;
+            }
+            else if (!isPointer && Check(TokenType::Question))
+            {
+                JLANG_ERROR("Only pointer types can be nullable. Use '" + typeName + "*?' instead of '" +
+                            typeName + "?'");
+                Advance();
+            }
+
+            params.push_back(Parameter{paramName, TypeRef{typeName, isPointer, isNullable}});
 
         } while (IsMatched(TokenType::Comma));
     }
@@ -307,7 +331,7 @@ std::shared_ptr<AstNode> Parser::ParseFunction()
     }
 
     // Parse return type (optional, after ->), default to void
-    TypeRef returnType{"void", false};
+    TypeRef returnType{"void", false, false};
 
     if (IsMatched(TokenType::Arrow))
     {
@@ -317,7 +341,20 @@ std::shared_ptr<AstNode> Parser::ParseFunction()
             JLANG_ERROR("Expected return type after '->'");
         }
         bool isPointer = IsMatched(TokenType::Star);
-        returnType = TypeRef{returnTypeName, isPointer};
+
+        bool isNullable = false;
+        if (isPointer && IsMatched(TokenType::Question))
+        {
+            isNullable = true;
+        }
+        else if (!isPointer && Check(TokenType::Question))
+        {
+            JLANG_ERROR("Only pointer types can be nullable. Use '" + returnTypeName + "*?' instead of '" +
+                        returnTypeName + "?'");
+            Advance();
+        }
+
+        returnType = TypeRef{returnTypeName, isPointer, isNullable};
     }
 
     auto body = ParseBlock();
@@ -432,6 +469,7 @@ std::shared_ptr<AstNode> Parser::ParseVarDecl()
 
     std::string typeName;
     bool isPointer = false;
+    bool isNullable = false;
     std::shared_ptr<AstNode> initializer = nullptr;
 
     // Check for type inference syntax: var x := expr;
@@ -464,6 +502,17 @@ std::shared_ptr<AstNode> Parser::ParseVarDecl()
 
         isPointer = IsMatched(TokenType::Star);
 
+        if (isPointer && IsMatched(TokenType::Question))
+        {
+            isNullable = true;
+        }
+        else if (!isPointer && Check(TokenType::Question))
+        {
+            JLANG_ERROR("Only pointer types can be nullable. Use '" + typeName + "*?' instead of '" +
+                        typeName + "?'");
+            Advance();
+        }
+
         if (IsMatched(TokenType::Equal))
         {
             initializer = ParseExpression();
@@ -477,7 +526,7 @@ std::shared_ptr<AstNode> Parser::ParseVarDecl()
 
     auto varDecl = std::make_shared<VariableDecl>();
     varDecl->name = varName;
-    varDecl->varType = TypeRef{typeName, isPointer};
+    varDecl->varType = TypeRef{typeName, isPointer, isNullable};
     varDecl->initializer = initializer;
     varDecl->isMutable = isMutable;
 
@@ -946,6 +995,18 @@ std::shared_ptr<AstNode> Parser::ParsePrimary()
             std::string typeName = Previous().m_lexeme;
             bool isPointer = IsMatched(TokenType::Star);
 
+            bool isNullable = false;
+            if (isPointer && IsMatched(TokenType::Question))
+            {
+                isNullable = true;
+            }
+            else if (!isPointer && Check(TokenType::Question))
+            {
+                JLANG_ERROR("Only pointer types can be nullable. Use '" + typeName + "*?' instead of '" +
+                            typeName + "?'");
+                Advance();
+            }
+
             if (!IsMatched(TokenType::RParen))
             {
                 JLANG_ERROR("Expected ')' after cast type");
@@ -955,7 +1016,7 @@ std::shared_ptr<AstNode> Parser::ParsePrimary()
             auto expr = ParsePrimary();
 
             auto cast = std::make_shared<CastExpr>();
-            cast->targetType = TypeRef{typeName, isPointer};
+            cast->targetType = TypeRef{typeName, isPointer, isNullable};
             cast->expr = expr;
             return cast;
         }

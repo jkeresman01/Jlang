@@ -148,6 +148,9 @@ void Scanner::ScanToken()
     case '>':
         AddToken(IsMatched('=') ? TokenType::GreaterEqual : TokenType::Greater);
         break;
+    case '?':
+        AddToken(TokenType::Question);
+        break;
     case '-':
         if (IsMatched('-'))
         {

@@ -321,8 +321,59 @@ if (p == null) { ... }
 
 <h6><i>Using lowercase `null` is consistent with most modern languages (Java, C#, JavaScript) and feels more natural than the C macro `NULL`.</i></h6>
 
+#### Null Safety
+
+Pointer types in jlang are **non-nullable by default**. To allow a pointer to hold `null`, you must explicitly mark it with `*?`:
+
+```rust
+var p: Person* = alloc<Person>();   // non-nullable, CANNOT be null
+var q: Person*? = null;              // nullable, CAN be null
+```
+
+The compiler enforces null safety at compile time with three rules:
+
+**1. Cannot assign `null` to a non-nullable pointer:**
+
+```rust
+var p: Person* = null;   // ERROR: Cannot assign null to non-nullable pointer type 'Person*'. Use 'Person*?' to allow null.
+p = null;                // ERROR: Cannot assign null to non-nullable variable 'p'.
+```
+
+**2. Non-nullable pointers must be initialized:**
+
+```rust
+var p: Person*;          // ERROR: Non-nullable pointer 'p' must be initialized.
+var q: Person*? = null;  // OK - nullable pointers can be left null
+```
+
+**3. Cannot access members on a nullable pointer:**
+
+```rust
+var q: Person*? = null;
+q.Name;                  // ERROR: Cannot access member 'Name' on nullable type 'Person*?'. Check for null first.
+```
+
+Non-nullable pointers are guaranteed safe to dereference - no null check needed:
+
+```rust
+var p: Person* = alloc<Person>();
+p.Name;                  // OK - p is guaranteed non-null
+```
+
+| Syntax | Nullable | Can be `null` | Member access |
+|--------|----------|---------------|---------------|
+| `Type*` | No | Compile error | Allowed |
+| `Type*?` | Yes | Allowed | Compile error |
+
+<h6><i>This design is inspired by Kotlin's null safety system, where `Type` is non-nullable and `Type?` is nullable. By making non-null the default, the most common case (pointers that should never be null) requires no extra syntax, while the less common case (nullable pointers) is explicitly marked. This eliminates null pointer dereferences at compile time rather than at runtime.</i></h6>
+
 > [!TIP]
-> Always check if `alloc<T>()` returns `null` before using the pointer.
+> Prefer `Type*` (non-nullable) whenever possible. Only use `Type*?` when the pointer genuinely needs to represent the absence of a value.
+
+<h6><i>See `samples/null_safety.j` for a working example.</i></h6>
+
+> [!NOTE]
+> Smart casts after null checks (e.g., automatically treating a `Person*?` as `Person*` inside an `if (p != null)` block) are a planned future enhancement.
 
 #### Logical operators
 

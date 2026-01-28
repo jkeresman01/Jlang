@@ -173,6 +173,13 @@ void CodeGenerator::VisitVariableDecl(VariableDecl &node)
     // Explicit type - use existing logic
     varType = MapType(node.varType);
 
+    // Null safety: non-nullable pointers must be initialized
+    if (node.varType.isPointer && !node.varType.isNullable && !node.initializer)
+    {
+        JLANG_ERROR(STR("Non-nullable pointer '%s' must be initialized.", node.name.c_str()));
+        return;
+    }
+
     llvm::AllocaInst *alloca = m_IRBuilder.CreateAlloca(varType, nullptr, node.name);
 
     if (node.initializer)
@@ -180,6 +187,16 @@ void CodeGenerator::VisitVariableDecl(VariableDecl &node)
         node.initializer->Accept(*this);
         if (m_LastValue)
         {
+            // Null safety: cannot assign null to non-nullable pointer
+            if (node.varType.isPointer && !node.varType.isNullable &&
+                llvm::isa<llvm::ConstantPointerNull>(m_LastValue))
+            {
+                JLANG_ERROR(
+                    STR("Cannot assign null to non-nullable pointer type '%s*'. Use '%s*?' to allow null.",
+                        node.varType.name.c_str(), node.varType.name.c_str()));
+                return;
+            }
+
             if (m_LastValue->getType() != varType && varType->isPointerTy() &&
                 m_LastValue->getType()->isPointerTy())
             {
@@ -850,6 +867,14 @@ void CodeGenerator::VisitAssignExpr(AssignExpr &node)
         return;
     }
 
+    // Null safety: cannot assign null to non-nullable pointer
+    if (it->second.type.isPointer && !it->second.type.isNullable &&
+        llvm::isa<llvm::ConstantPointerNull>(valueToStore))
+    {
+        JLANG_ERROR(STR("Cannot assign null to non-nullable variable '%s'.", node.name.c_str()));
+        return;
+    }
+
     llvm::Value *targetVar = it->second.value;
 
     if (llvm::AllocaInst *alloca = llvm::dyn_cast<llvm::AllocaInst>(targetVar))
@@ -885,6 +910,14 @@ void CodeGenerator::VisitMemberAccessExpr(MemberAccessExpr &node)
         auto typeIt = m_variables.find(varExpr->name);
         if (typeIt != m_variables.end())
         {
+            // Null safety: cannot access member on nullable pointer
+            if (typeIt->second.type.isNullable)
+            {
+                JLANG_ERROR(STR("Cannot access member '%s' on nullable type '%s*?'. Check for null first.",
+                                node.memberName.c_str(), typeIt->second.type.name.c_str()));
+                return;
+            }
+
             structTypeName = typeIt->second.type.name;
         }
     }
