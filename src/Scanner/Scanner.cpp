@@ -93,13 +93,24 @@ void Scanner::ScanToken()
         AddToken(TokenType::Dot);
         break;
     case '*':
-        AddToken(TokenType::Star);
+        AddToken(IsMatched('=') ? TokenType::StarEqual : TokenType::Star);
         break;
     case '+':
-        AddToken(IsMatched('+') ? TokenType::PlusPlus : TokenType::Plus);
+        if (IsMatched('+'))
+        {
+            AddToken(TokenType::PlusPlus);
+        }
+        else if (IsMatched('='))
+        {
+            AddToken(TokenType::PlusEqual);
+        }
+        else
+        {
+            AddToken(TokenType::Plus);
+        }
         break;
     case '/':
-        AddToken(TokenType::Slash);
+        AddToken(IsMatched('=') ? TokenType::SlashEqual : TokenType::Slash);
         break;
     case '=':
         AddToken(IsMatched('=') ? TokenType::EqualEqual : TokenType::Equal);
@@ -141,6 +152,10 @@ void Scanner::ScanToken()
         else if (IsMatched('>'))
         {
             AddToken(TokenType::Arrow);
+        }
+        else if (IsMatched('='))
+        {
+            AddToken(TokenType::MinusEqual);
         }
         else
         {

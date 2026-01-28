@@ -62,6 +62,10 @@ enum class TokenType
     OrKeyword,  // 'or' keyword (non-short-circuit)
     PlusPlus,   // ++
     MinusMinus, // --
+    PlusEqual,  // +=
+    MinusEqual, // -=
+    StarEqual,  // *=
+    SlashEqual, // /=
 
     // Literals and identifiers
     Identifier,

@@ -622,6 +622,47 @@ std::shared_ptr<AstNode> Parser::ParseExpression()
         }
     }
 
+    // Handle compound assignment: x += expr  =>  x = x + expr
+    std::string compoundOp;
+    if (IsMatched(TokenType::PlusEqual))
+    {
+        compoundOp = "+";
+    }
+    else if (IsMatched(TokenType::MinusEqual))
+    {
+        compoundOp = "-";
+    }
+    else if (IsMatched(TokenType::StarEqual))
+    {
+        compoundOp = "*";
+    }
+    else if (IsMatched(TokenType::SlashEqual))
+    {
+        compoundOp = "/";
+    }
+
+    if (!compoundOp.empty())
+    {
+        auto rhs = ParseExpression();
+
+        if (auto varExpr = std::dynamic_pointer_cast<VarExpr>(expr))
+        {
+            auto binary = std::make_shared<BinaryExpr>();
+            binary->op = compoundOp;
+            binary->left = expr;
+            binary->right = rhs;
+
+            auto assign = std::make_shared<AssignExpr>();
+            assign->name = varExpr->name;
+            assign->value = binary;
+            return assign;
+        }
+        else
+        {
+            JLANG_ERROR("Invalid compound assignment target");
+        }
+    }
+
     return expr;
 }
 

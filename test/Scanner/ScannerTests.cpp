@@ -1186,3 +1186,54 @@ TEST(ScannerTest, TokenizesBooleanVariableDeclaration)
     EXPECT_EQ(tokens[6].m_type, TokenType::Semicolon);
     EXPECT_EQ(tokens[7].m_type, TokenType::EndOfFile);
 }
+
+// Compound assignment operators
+TEST(ScannerTest, TokenizesPlusEqual)
+{
+    Scanner scanner("+=");
+    std::vector<Token> tokens = scanner.Tokenize();
+
+    ASSERT_EQ(tokens.size(), 2);
+    EXPECT_EQ(tokens[0].m_type, TokenType::PlusEqual);
+    EXPECT_EQ(tokens[0].m_lexeme, "+=");
+}
+
+TEST(ScannerTest, TokenizesMinusEqual)
+{
+    Scanner scanner("-=");
+    std::vector<Token> tokens = scanner.Tokenize();
+
+    ASSERT_EQ(tokens.size(), 2);
+    EXPECT_EQ(tokens[0].m_type, TokenType::MinusEqual);
+    EXPECT_EQ(tokens[0].m_lexeme, "-=");
+}
+
+TEST(ScannerTest, TokenizesStarEqual)
+{
+    Scanner scanner("*=");
+    std::vector<Token> tokens = scanner.Tokenize();
+
+    ASSERT_EQ(tokens.size(), 2);
+    EXPECT_EQ(tokens[0].m_type, TokenType::StarEqual);
+    EXPECT_EQ(tokens[0].m_lexeme, "*=");
+}
+
+TEST(ScannerTest, TokenizesSlashEqual)
+{
+    Scanner scanner("/=");
+    std::vector<Token> tokens = scanner.Tokenize();
+
+    ASSERT_EQ(tokens.size(), 2);
+    EXPECT_EQ(tokens[0].m_type, TokenType::SlashEqual);
+    EXPECT_EQ(tokens[0].m_lexeme, "/=");
+}
+
+TEST(ScannerTest, TokenizesPlusSpaceEqualAsSeparateTokens)
+{
+    Scanner scanner("+ =");
+    std::vector<Token> tokens = scanner.Tokenize();
+
+    ASSERT_EQ(tokens.size(), 3);
+    EXPECT_EQ(tokens[0].m_type, TokenType::Plus);
+    EXPECT_EQ(tokens[1].m_type, TokenType::Equal);
+}
