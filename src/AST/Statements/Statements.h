@@ -30,6 +30,18 @@ struct WhileStatement : public Statement
     void Accept(AstVisitor &visitor) override { visitor.VisitWhileStatement(*this); }
 };
 
+struct ForStatement : public Statement
+{
+    std::shared_ptr<AstNode> init;
+    std::shared_ptr<AstNode> condition;
+    std::shared_ptr<AstNode> update;
+    std::shared_ptr<AstNode> body;
+
+    ForStatement() { type = NodeType::ForStatement; }
+
+    void Accept(AstVisitor &visitor) override { visitor.VisitForStatement(*this); }
+};
+
 struct BlockStatement : public Statement
 {
     std::vector<std::shared_ptr<AstNode>> statements;

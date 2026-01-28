@@ -370,6 +370,11 @@ std::shared_ptr<AstNode> Parser::ParseStatement()
         return ParseWhileStatement();
     }
 
+    if (Check(TokenType::For))
+    {
+        return ParseForStatement();
+    }
+
     if (Check(TokenType::Var))
     {
         return ParseVarDecl();
@@ -530,6 +535,65 @@ std::shared_ptr<AstNode> Parser::ParseWhileStatement()
 
     auto node = std::make_shared<WhileStatement>();
     node->condition = condition;
+    node->body = body;
+
+    return node;
+}
+
+std::shared_ptr<AstNode> Parser::ParseForStatement()
+{
+    Advance(); // consume 'for'
+
+    if (!IsMatched(TokenType::LParen))
+    {
+        JLANG_ERROR("Expected '(' after 'for'");
+    }
+
+    // Parse initializer (var decl or expression statement, or empty)
+    std::shared_ptr<AstNode> init = nullptr;
+    if (Check(TokenType::Semicolon))
+    {
+        Advance(); // empty initializer
+    }
+    else if (Check(TokenType::Var))
+    {
+        init = ParseVarDecl(); // already consumes semicolon
+    }
+    else
+    {
+        init = ParseExprStatement(); // already consumes semicolon
+    }
+
+    // Parse condition (or empty for infinite loop)
+    std::shared_ptr<AstNode> condition = nullptr;
+    if (!Check(TokenType::Semicolon))
+    {
+        condition = ParseExpression();
+    }
+
+    if (!IsMatched(TokenType::Semicolon))
+    {
+        JLANG_ERROR("Expected ';' after for loop condition");
+    }
+
+    // Parse update expression (or empty)
+    std::shared_ptr<AstNode> update = nullptr;
+    if (!Check(TokenType::RParen))
+    {
+        update = ParseExpression();
+    }
+
+    if (!IsMatched(TokenType::RParen))
+    {
+        JLANG_ERROR("Expected ')' after for clauses");
+    }
+
+    auto body = ParseStatement();
+
+    auto node = std::make_shared<ForStatement>();
+    node->init = init;
+    node->condition = condition;
+    node->update = update;
     node->body = body;
 
     return node;

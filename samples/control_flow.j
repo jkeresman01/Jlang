@@ -55,5 +55,33 @@ fn main() -> i32 {
     }
     printf("Liftoff!");
 
+    // For loops
+    // Basic for loop with all three clauses
+    for (var j: i32 = 0; j < 5; j++) {
+        printf("j = %d", j);
+    }
+
+    // For loop with type inference
+    for (var k := 0; k < 3; k++) {
+        printf("k = %d", k);
+    }
+
+    // For loop with prefix increment
+    for (var m: i32 = 0; m < 3; ++m) {
+        printf("m = %d", m);
+    }
+
+    // For loop counting down
+    for (var n: i32 = 5; n > 0; n--) {
+        printf("Countdown: %d", n);
+    }
+
+    // For loop with arithmetic update
+    var sum: i32 = 0;
+    for (var p: i32 = 1; p < 6; p++) {
+        sum = sum + p;
+    }
+    printf("Sum 1..5 = %d", sum);
+
     return 0;
 }

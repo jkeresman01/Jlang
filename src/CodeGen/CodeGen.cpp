@@ -277,6 +277,72 @@ void CodeGenerator::VisitWhileStatement(WhileStatement &node)
     m_IRBuilder.SetInsertPoint(exitBlock);
 }
 
+void CodeGenerator::VisitForStatement(ForStatement &node)
+{
+    // Execute initializer (if present)
+    if (node.init)
+    {
+        node.init->Accept(*this);
+    }
+
+    llvm::Function *parentFunction = m_IRBuilder.GetInsertBlock()->getParent();
+
+    llvm::BasicBlock *condBlock = llvm::BasicBlock::Create(m_Context, "for.cond", parentFunction);
+    llvm::BasicBlock *bodyBlock = llvm::BasicBlock::Create(m_Context, "for.body");
+    llvm::BasicBlock *updateBlock = llvm::BasicBlock::Create(m_Context, "for.update");
+    llvm::BasicBlock *exitBlock = llvm::BasicBlock::Create(m_Context, "for.exit");
+
+    // Branch to condition block
+    m_IRBuilder.CreateBr(condBlock);
+
+    // Condition block
+    m_IRBuilder.SetInsertPoint(condBlock);
+    if (node.condition)
+    {
+        node.condition->Accept(*this);
+        llvm::Value *condValue = m_LastValue;
+
+        if (!condValue)
+        {
+            JLANG_ERROR("Invalid condition in for statement");
+            return;
+        }
+
+        // Convert i32 to i1 if necessary
+        if (condValue->getType()->isIntegerTy(32))
+        {
+            condValue = m_IRBuilder.CreateICmpNE(condValue, llvm::ConstantInt::get(condValue->getType(), 0),
+                                                 "forcond");
+        }
+
+        m_IRBuilder.CreateCondBr(condValue, bodyBlock, exitBlock);
+    }
+    else
+    {
+        // No condition = infinite loop
+        m_IRBuilder.CreateBr(bodyBlock);
+    }
+
+    // Body block
+    bodyBlock->insertInto(parentFunction);
+    m_IRBuilder.SetInsertPoint(bodyBlock);
+    node.body->Accept(*this);
+    m_IRBuilder.CreateBr(updateBlock);
+
+    // Update block
+    updateBlock->insertInto(parentFunction);
+    m_IRBuilder.SetInsertPoint(updateBlock);
+    if (node.update)
+    {
+        node.update->Accept(*this);
+    }
+    m_IRBuilder.CreateBr(condBlock);
+
+    // Exit block
+    exitBlock->insertInto(parentFunction);
+    m_IRBuilder.SetInsertPoint(exitBlock);
+}
+
 void CodeGenerator::VisitBlockStatement(BlockStatement &node)
 {
     for (auto &statement : node.statements)

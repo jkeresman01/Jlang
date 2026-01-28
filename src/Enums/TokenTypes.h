@@ -12,6 +12,7 @@ enum class TokenType
     If,
     Else,
     While,
+    For,
     Return,
     Null,
     Alloc,

@@ -161,7 +161,7 @@ var x: i32 = 42; // inline comment
 
 <h6><i>jlang supports C-style single-line (`//`) and block (`/* */`) comments. Block comments can span multiple lines.</i></h6>
 
-#### Control Flow: C-style if/else and while
+#### Control Flow: C-style if/else, while, and for
 
 ```rust
 if (x == 0) {
@@ -187,7 +187,40 @@ while (i < 10) {
 
 <h6><i>The `while` loop uses C-style syntax: `while (condition) { body }`. The condition is evaluated before each iteration, and the loop continues as long as the condition is true. Braces are optional for single statements.</i></h6>
 
+#### For loops
 
+```rust
+for (var i: i32 = 0; i < 10; i++) {
+    printf("i = %d", i);
+}
+```
+
+The `for` loop has three clauses separated by semicolons: `for (init; condition; update) { body }`.
+
+- **init**: Executed once before the loop starts. Can be a variable declaration or an expression. Can be empty.
+- **condition**: Evaluated before each iteration. The loop continues while this is true. Can be empty (infinite loop).
+- **update**: Executed after each iteration. Can be empty.
+
+```rust
+// With type inference
+for (var i := 0; i < 5; i++) {
+    printf("%d", i);
+}
+
+// Counting down
+for (var i: i32 = 10; i > 0; i--) {
+    printf("Countdown: %d", i);
+}
+
+// Using prefix increment
+for (var i: i32 = 0; i < 5; ++i) {
+    printf("%d", i);
+}
+```
+
+<h6><i>The `for` loop is syntactic sugar over the `while` loop, following standard C-style semantics. All three clauses are optional - omitting the condition creates an infinite loop. Braces are optional for single statements.</i></h6>
+
+<h6><i>See `samples/control_flow.j` for comprehensive examples of all control flow constructs.</i></h6>
 
 #### Structs: colon for interface implementation
 

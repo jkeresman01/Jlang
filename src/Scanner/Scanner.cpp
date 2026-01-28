@@ -11,6 +11,7 @@ static std::unordered_map<std::string, TokenType> s_Keywords = {
     {"if", TokenType::If},
     {"else", TokenType::Else},
     {"while", TokenType::While},
+    {"for", TokenType::For},
     {"return", TokenType::Return},
     // Declarations
     {"fn", TokenType::Fn},

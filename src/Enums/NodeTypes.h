@@ -11,6 +11,7 @@ enum class NodeType
 
     IfStatement,
     WhileStatement,
+    ForStatement,
     BlockStatement,
     ExprStatement,
     ReturnStatement,
