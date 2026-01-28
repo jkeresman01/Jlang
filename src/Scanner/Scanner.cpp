@@ -16,6 +16,7 @@ static std::unordered_map<std::string, TokenType> s_Keywords = {
     // Declarations
     {"fn", TokenType::Fn},
     {"var", TokenType::Var},
+    {"val", TokenType::Val},
     {"struct", TokenType::Struct},
     {"interface", TokenType::Interface},
     // Types

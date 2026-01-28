@@ -375,7 +375,7 @@ std::shared_ptr<AstNode> Parser::ParseStatement()
         return ParseForStatement();
     }
 
-    if (Check(TokenType::Var))
+    if (Check(TokenType::Var) || Check(TokenType::Val))
     {
         return ParseVarDecl();
     }
@@ -418,7 +418,8 @@ std::shared_ptr<AstNode> Parser::ParseReturnStatement()
 
 std::shared_ptr<AstNode> Parser::ParseVarDecl()
 {
-    Advance(); // consume 'var'
+    bool isMutable = Check(TokenType::Var);
+    Advance(); // consume 'var' or 'val'
 
     if (!IsMatched(TokenType::Identifier))
     {
@@ -478,6 +479,7 @@ std::shared_ptr<AstNode> Parser::ParseVarDecl()
     varDecl->name = varName;
     varDecl->varType = TypeRef{typeName, isPointer};
     varDecl->initializer = initializer;
+    varDecl->isMutable = isMutable;
 
     return varDecl;
 }
@@ -555,7 +557,7 @@ std::shared_ptr<AstNode> Parser::ParseForStatement()
     {
         Advance(); // empty initializer
     }
-    else if (Check(TokenType::Var))
+    else if (Check(TokenType::Var) || Check(TokenType::Val))
     {
         init = ParseVarDecl(); // already consumes semicolon
     }

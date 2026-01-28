@@ -8,6 +8,7 @@ enum class TokenType
     Interface,
     Struct,
     Var,
+    Val,
     Fn,
     If,
     Else,

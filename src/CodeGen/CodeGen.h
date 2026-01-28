@@ -79,6 +79,7 @@ class CodeGenerator : public AstVisitor
         llvm::Value *value;
         TypeRef type;
         bool used = false;
+        bool isMutable = true;
     };
 
     void CheckUnusedVariables();

@@ -165,7 +165,7 @@ void CodeGenerator::VisitVariableDecl(VariableDecl &node)
         m_IRBuilder.CreateStore(m_LastValue, alloca);
 
         // Track variable with inferred type
-        m_variables[node.name] = VariableInfo{alloca, inferredType, false};
+        m_variables[node.name] = VariableInfo{alloca, inferredType, false, node.isMutable};
         m_currentFunctionVariables.insert(node.name);
         return;
     }
@@ -190,7 +190,7 @@ void CodeGenerator::VisitVariableDecl(VariableDecl &node)
     }
 
     // Track variable with usage info (initially unused)
-    m_variables[node.name] = VariableInfo{alloca, node.varType, false};
+    m_variables[node.name] = VariableInfo{alloca, node.varType, false, node.isMutable};
     m_currentFunctionVariables.insert(node.name);
 }
 
@@ -844,6 +844,12 @@ void CodeGenerator::VisitAssignExpr(AssignExpr &node)
         return;
     }
 
+    if (!it->second.isMutable)
+    {
+        JLANG_ERROR(STR("Cannot assign to immutable variable '%s' (declared with 'val')", node.name.c_str()));
+        return;
+    }
+
     llvm::Value *targetVar = it->second.value;
 
     if (llvm::AllocaInst *alloca = llvm::dyn_cast<llvm::AllocaInst>(targetVar))
@@ -946,6 +952,13 @@ void CodeGenerator::VisitPrefixExpr(PrefixExpr &node)
         return;
     }
 
+    if (!it->second.isMutable)
+    {
+        JLANG_ERROR(
+            STR("Cannot modify immutable variable '%s' (declared with 'val')", varExpr->name.c_str()));
+        return;
+    }
+
     // Mark variable as used
     it->second.used = true;
 
@@ -993,6 +1006,13 @@ void CodeGenerator::VisitPostfixExpr(PostfixExpr &node)
     if (it == m_variables.end())
     {
         JLANG_ERROR(STR("Undefined variable: %s", varExpr->name.c_str()));
+        return;
+    }
+
+    if (!it->second.isMutable)
+    {
+        JLANG_ERROR(
+            STR("Cannot modify immutable variable '%s' (declared with 'val')", varExpr->name.c_str()));
         return;
     }
 

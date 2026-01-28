@@ -62,6 +62,7 @@ struct VariableDecl : public AstNode
     std::string name;
     TypeRef varType;
     std::shared_ptr<AstNode> initializer;
+    bool isMutable = true;
 
     VariableDecl() { type = NodeType::VariableDecl; }
 

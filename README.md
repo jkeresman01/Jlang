@@ -89,6 +89,41 @@ var isPositive := x > 0;
 
 <h6><i>Type inference reduces verbosity while maintaining type safety. The compiler determines the type at compile-time, so there's no runtime overhead.</i></h6>
 
+#### Immutable variables with `val`
+
+jlang provides `val` as the immutable counterpart to `var`. A `val` variable must be initialized at declaration and cannot be reassigned, incremented, or decremented afterward:
+
+```rust
+// Immutable with explicit type
+val pi: f64 = 3.14159;
+
+// Immutable with type inference
+val maxRetries := 3;
+
+// Mutable variable
+var counter: i32 = 0;
+counter = counter + 1;  // OK
+
+// Compile errors:
+// pi = 2.71;           // ERROR: Cannot assign to immutable variable 'pi'
+// maxRetries++;        // ERROR: Cannot modify immutable variable 'maxRetries'
+// maxRetries += 1;     // ERROR: Cannot assign to immutable variable 'maxRetries'
+```
+
+All mutation operations are rejected at compile time: direct assignment (`=`), compound assignment (`+=`, `-=`, `*=`, `/=`, `%=`), and increment/decrement (`++`, `--`).
+
+| Keyword | Mutability | Use case |
+|---------|-----------|----------|
+| `var` | Mutable | Loop counters, accumulators, state that changes |
+| `val` | Immutable | Constants, configuration, values that shouldn't change |
+
+<h6><i>The `val` keyword was chosen over `const` to pair naturally with `var` - the single-character visual difference makes mutability easy to spot when scanning code. This convention follows Kotlin and Scala where `val`/`var` is the standard mutable/immutable distinction. Using `val` by default communicates intent: if a binding doesn't need to change, declare it immutable so the compiler can enforce it.</i></h6>
+
+> [!TIP]
+> Prefer `val` over `var` when possible. Immutable bindings make code easier to reason about and prevent accidental mutation bugs.
+
+<h6><i>See `samples/immutable_val.j` for a working example.</i></h6>
+
 #### Unused variables are compile-time errors
 
 jlang enforces that all declared variables must be used. If you declare a variable but never read from it, the compiler will emit an error:
