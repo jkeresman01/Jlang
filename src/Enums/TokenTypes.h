@@ -52,7 +52,9 @@ enum class TokenType
     NotEqual,
     EqualEqual,
     Less,
+    LessEqual,    // <=
     Greater,
+    GreaterEqual, // >=
     Equal,
     ColonEqual, // := for type inference
     And,

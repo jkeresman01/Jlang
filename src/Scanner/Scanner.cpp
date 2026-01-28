@@ -142,10 +142,10 @@ void Scanner::ScanToken()
         }
         break;
     case '<':
-        AddToken(TokenType::Less);
+        AddToken(IsMatched('=') ? TokenType::LessEqual : TokenType::Less);
         break;
     case '>':
-        AddToken(TokenType::Greater);
+        AddToken(IsMatched('=') ? TokenType::GreaterEqual : TokenType::Greater);
         break;
     case '-':
         if (IsMatched('-'))

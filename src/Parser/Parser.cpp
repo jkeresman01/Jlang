@@ -734,7 +734,8 @@ std::shared_ptr<AstNode> Parser::ParseComparison()
 {
     auto left = ParseAdditive();
 
-    while (Check(TokenType::Less) || Check(TokenType::Greater))
+    while (Check(TokenType::Less) || Check(TokenType::LessEqual) || Check(TokenType::Greater) ||
+           Check(TokenType::GreaterEqual))
     {
         std::string op = Peek().m_lexeme;
         Advance();

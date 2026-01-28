@@ -570,9 +570,17 @@ void CodeGenerator::VisitBinaryExpr(BinaryExpr &node)
     {
         m_LastValue = m_IRBuilder.CreateICmpSLT(leftVal, rightVal, "lt");
     }
+    else if (node.op == "<=")
+    {
+        m_LastValue = m_IRBuilder.CreateICmpSLE(leftVal, rightVal, "le");
+    }
     else if (node.op == ">")
     {
         m_LastValue = m_IRBuilder.CreateICmpSGT(leftVal, rightVal, "gt");
+    }
+    else if (node.op == ">=")
+    {
+        m_LastValue = m_IRBuilder.CreateICmpSGE(leftVal, rightVal, "ge");
     }
     else if (node.op == "+")
     {
