@@ -590,6 +590,10 @@ void CodeGenerator::VisitBinaryExpr(BinaryExpr &node)
     {
         m_LastValue = m_IRBuilder.CreateSDiv(leftVal, rightVal, "div");
     }
+    else if (node.op == "%")
+    {
+        m_LastValue = m_IRBuilder.CreateSRem(leftVal, rightVal, "mod");
+    }
     else if (node.op == "and")
     {
         // Non-short-circuit AND: both operands are always evaluated

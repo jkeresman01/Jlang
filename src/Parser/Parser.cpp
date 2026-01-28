@@ -640,6 +640,10 @@ std::shared_ptr<AstNode> Parser::ParseExpression()
     {
         compoundOp = "/";
     }
+    else if (IsMatched(TokenType::PercentEqual))
+    {
+        compoundOp = "%";
+    }
 
     if (!compoundOp.empty())
     {
@@ -770,7 +774,7 @@ std::shared_ptr<AstNode> Parser::ParseMultiplicative()
 {
     auto left = ParseUnary();
 
-    while (Check(TokenType::Star) || Check(TokenType::Slash))
+    while (Check(TokenType::Star) || Check(TokenType::Slash) || Check(TokenType::Percent))
     {
         std::string op = Peek().m_lexeme;
         Advance();

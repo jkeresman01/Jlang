@@ -112,6 +112,9 @@ void Scanner::ScanToken()
     case '/':
         AddToken(IsMatched('=') ? TokenType::SlashEqual : TokenType::Slash);
         break;
+    case '%':
+        AddToken(IsMatched('=') ? TokenType::PercentEqual : TokenType::Percent);
+        break;
     case '=':
         AddToken(IsMatched('=') ? TokenType::EqualEqual : TokenType::Equal);
         break;
