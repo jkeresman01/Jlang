@@ -15,37 +15,6 @@
 > [!NOTE]
 > This project is still very much a work in progress. Syntax and features may change.
 
-## Language Syntax
-
-```rust
-interface IPrintable {
-    fn print();
-}
-
-struct Person : IPrintable {
-    Name: char*;    // Public - uppercase
-    Age: i32;       // Public - uppercase
-}
-
-fn print(self: Person*) {
-    printf("Name: %s", self.Name);
-    printf("Age: %d", self.Age);
-}
-
-fn main() -> i32 {
-    var p: Person* = alloc<Person>();
-
-    if (p == null) {
-        printf("No can do");
-    } else {
-        printf("Incredible");
-    }
-
-    free(p);
-    return 0;
-}
-```
-
 ### Syntax Design Decisions
 
 <h6><i>jlang's syntax is designed to be clean, explicit, and familiar to developers coming from C, Go, or Rust.</i></h6>
@@ -612,14 +581,14 @@ Both perform the same mutation (load, add, store), but they differ in what value
 
 jlang supports the standard set of bitwise operators for integer types:
 
-| Operator | Description | Example |
-|----------|-------------|---------|
-| `&` | Bitwise AND | `255 & 15` → `15` |
-| `\|` | Bitwise OR | `16 \| 8` → `24` |
-| `^` | Bitwise XOR | `255 ^ 15` → `240` |
-| `~` | Bitwise NOT (unary) | `~0` → `-1` |
-| `<<` | Left shift | `1 << 4` → `16` |
-| `>>` | Right shift (arithmetic) | `32 >> 2` → `8` |
+| Operator | Description |
+|----------|-------------|
+| `&` | Bitwise AND | 
+| `\|` | Bitwise OR |
+| `^` | Bitwise XOR |
+| `~` | Bitwise NOT (unary) |
+| `<<` | Left shift | 
+| `>>` | Right shift (arithmetic) |
 
 All binary bitwise operators also have compound assignment forms: `&=`, `|=`, `^=`, `<<=`, `>>=`.
 
